@@ -13,7 +13,7 @@ const { post } = Astro.props;
 const { Content, headings, remarkPluginFrontmatter } = await render(post);
 const toc = headings.filter((h) => h.depth === 2);
 const fmt = (d: Date) =>
-  d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 
 const jsonLd = {
   '@context': 'https://schema.org',
