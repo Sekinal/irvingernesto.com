@@ -1,0 +1,24 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { SITE } from '@/lib/site';
+---
+
+<BaseLayout title={`404 · ${SITE.shortName}`} description="Page not found.">
+  <section class="flex min-h-svh flex-col items-start justify-center px-5 md:px-10">
+    <div class="mx-auto w-full max-w-[1600px]">
+      <p class="data-label mb-4">Error / Signal lost</p>
+      <h1 class="display-huge text-[clamp(4rem,18vw,16rem)]">
+        404<span class="text-accent">.</span>
+      </h1>
+      <p class="text-muted mt-4 max-w-md leading-relaxed">
+        This page doesn't exist. Or it's been reverse-engineered out of existence.
+      </p>
+      <a
+        href="/"
+        class="group border-line-strong hover:border-accent hover:bg-accent mt-10 inline-flex items-center gap-3 rounded-full border px-6 py-3 transition-all duration-300 hover:text-white"
+      >
+        <span class="data-label !text-current">Back home</span>
+      </a>
+    </div>
+  </section>
+</BaseLayout>

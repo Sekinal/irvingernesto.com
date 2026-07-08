@@ -1,0 +1,167 @@
+---
+import { SITE } from '@/lib/site';
+---
+
+<section class="relative flex min-h-svh flex-col justify-end overflow-hidden">
+  <canvas id="field" class="absolute inset-0 size-full" aria-hidden="true"></canvas>
+  <div
+    class="pointer-events-none absolute inset-0"
+    style="background: radial-gradient(ellipse 80% 60% at 50% 100%, var(--color-bg) 20%, transparent 100%);"
+    aria-hidden="true"
+  >
+  </div>
+
+  <div class="relative mx-auto w-full max-w-[1600px] px-5 pb-10 md:px-10 md:pb-14">
+    <p class="data-label mb-6 flex flex-wrap items-center gap-x-3 gap-y-1" data-reveal>
+      <span class="text-accent">●</span>
+      {SITE.name}
+      <span class="text-faint">/</span>
+      CTO @ RoomIQ
+      <span class="text-faint">/</span>
+      {SITE.location}
+    </p>
+
+    <h1 class="display-huge text-fg text-[clamp(3rem,10.5vw,10.5rem)]" data-reveal="mask">
+      AI engineer<span class="text-accent">,</span><br />
+      physicist<span class="text-accent">.</span>
+    </h1>
+
+    <div
+      class="mt-8 flex flex-col justify-between gap-8 md:flex-row md:items-end"
+      data-reveal
+      style="--reveal-delay: 0.2s"
+    >
+      <p class="text-muted max-w-md text-base leading-relaxed md:text-lg">
+        I build machine-learning systems and the infrastructure that keeps them alive:
+        from fine-tuned LLMs for endangered languages to data platforms moving
+        <span class="text-fg">80,000 listings a day</span>.
+      </p>
+
+      <div class="flex items-center gap-6">
+        <a
+          href="#work"
+          class="group border-line-strong hover:border-accent hover:bg-accent relative flex items-center gap-3 rounded-full border px-6 py-3 transition-all duration-300 hover:text-white"
+        >
+          <span class="data-label !text-current">Selected work</span>
+          <svg
+            class="size-3.5 transition-transform duration-300 group-hover:translate-y-0.5"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path d="M8 2v11M3.5 8.5 8 13l4.5-4.5"></path>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Particle drift field, a nod to physics. Cheap: ~90 particles, one rAF loop,
+  // paused when tab is hidden or reduced motion is on.
+  const canvas = document.getElementById('field') as HTMLCanvasElement;
+  const ctx = canvas.getContext('2d')!;
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+  let particles: { x: number; y: number; vx: number; vy: number; r: number }[] = [];
+  let w = 0;
+  let h = 0;
+  let raf = 0;
+  let pointerX = -9999;
+  let pointerY = -9999;
+
+  const accent = () =>
+    getComputedStyle(document.documentElement).getPropertyValue('--color-fg').trim();
+
+  function resize() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    w = canvas.clientWidth;
+    h = canvas.clientHeight;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const count = Math.min(110, Math.floor((w * h) / 16000));
+    particles = Array.from({ length: count }, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.25,
+      vy: (Math.random() - 0.5) * 0.25,
+      r: Math.random() * 1.4 + 0.4,
+    }));
+  }
+
+  function frame() {
+    ctx.clearRect(0, 0, w, h);
+    const color = accent();
+    const LINK = 110;
+
+    for (const p of particles) {
+      // Gentle pointer repulsion.
+      const dx = p.x - pointerX;
+      const dy = p.y - pointerY;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < 22500 && d2 > 0.01) {
+        const f = 12 / d2;
+        p.vx += dx * f;
+        p.vy += dy * f;
+      }
+      p.vx = Math.max(-0.4, Math.min(0.4, p.vx * 0.995));
+      p.vy = Math.max(-0.4, Math.min(0.4, p.vy * 0.995));
+      p.x = (p.x + p.vx + w) % w;
+      p.y = (p.y + p.vy + h) % h;
+    }
+
+    ctx.strokeStyle = color;
+    for (let i = 0; i < particles.length; i++) {
+      const a = particles[i];
+      for (let j = i + 1; j < particles.length; j++) {
+        const b = particles[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const d = Math.hypot(dx, dy);
+        if (d < LINK) {
+          ctx.globalAlpha = (1 - d / LINK) * 0.14;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.5;
+    for (const p of particles) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    raf = requestAnimationFrame(frame);
+  }
+
+  function start() {
+    cancelAnimationFrame(raf);
+    if (reduceMotion.matches) return;
+    raf = requestAnimationFrame(frame);
+  }
+
+  resize();
+  start();
+  addEventListener('resize', () => resize(), { passive: true });
+  addEventListener(
+    'pointermove',
+    (e) => {
+      const rect = canvas.getBoundingClientRect();
+      pointerX = e.clientX - rect.left;
+      pointerY = e.clientY - rect.top;
+    },
+    { passive: true }
+  );
+  document.addEventListener('visibilitychange', () => {
+    document.hidden ? cancelAnimationFrame(raf) : start();
+  });
+  reduceMotion.addEventListener('change', start);
+</script>

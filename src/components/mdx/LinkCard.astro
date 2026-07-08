@@ -1,0 +1,37 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  href: string;
+}
+const { title, description, href } = Astro.props;
+const host = new URL(href).host;
+---
+
+<a
+  href={href}
+  target="_blank"
+  rel="noopener"
+  class="not-prose group border-line hover:bg-card my-6 flex items-center justify-between gap-6 rounded-xl border p-5 no-underline transition-colors duration-300 md:p-6"
+>
+  <span class="min-w-0">
+    <span class="data-label block">{host}</span>
+    <span class="text-fg group-hover:text-accent mt-1.5 block font-semibold transition-colors">
+      {title}
+    </span>
+    <span class="text-muted mt-1 block text-sm leading-relaxed">{description}</span>
+  </span>
+  <span
+    class="border-line-strong group-hover:border-accent group-hover:bg-accent grid size-10 shrink-0 place-items-center rounded-full border transition-all duration-300 group-hover:text-white"
+  >
+    <svg
+      class="size-4 transition-transform duration-300 group-hover:rotate-45"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+    >
+      <path d="M3 13 13 3M5.5 3H13v7.5"></path>
+    </svg>
+  </span>
+</a>

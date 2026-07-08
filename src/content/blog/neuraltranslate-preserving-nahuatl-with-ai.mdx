@@ -1,0 +1,125 @@
+---
+title: 'NeuralTranslate: Preserving Nahuatl with AI'
+description: 'How I fine-tuned Gemma 3 27B to 97+ ChrF for Nahuatl-Spanish translation, with a full fine-tune on 4-bit quantized weights, on a single GPU.'
+pubDate: 2025-06-20
+tags: ['AI', 'NLP', 'Fine-tuning', 'Nahuatl', 'LLM']
+---
+
+import Callout from '@/components/mdx/Callout.astro';
+import LinkCard from '@/components/mdx/LinkCard.astro';
+import TrainingCurves from '@/components/mdx/TrainingCurves.astro';
+
+Nahuatl, the language of the Aztecs, is still spoken by over 1.7 million people in Mexico today. Yet it remains severely underrepresented in modern NLP systems. When I started this project, most translation tools either ignored Nahuatl entirely or produced unusable results.
+
+I set out to change that.
+
+## The challenge
+
+Building a neural machine translation system for Nahuatl presents unique challenges:
+
+1. **Low-resource language**: unlike Spanish or English, there's limited parallel corpus data available
+2. **Dialectal variation**: Nahuatl has many regional variants (Classical, Huasteca, Central…)
+3. **Complex morphology**: Nahuatl is polysynthetic: single words can express what takes entire sentences in English
+4. **Computational constraints**: state-of-the-art models require massive GPU resources
+
+I needed a model powerful enough to understand Nahuatl's complexity, yet efficient enough to train on available hardware.
+
+## Why Gemma 3 27B?
+
+After benchmarking across the Gemma 3 family, the 27B parameter model stood out. Smaller variants (1B, 4B) lacked the capacity to capture Nahuatl's morphological richness, while 27B showed promising zero-shot understanding of linguistic patterns.
+
+The problem? A 27B model in full precision needs ~108GB of VRAM just for weights, before optimizer states, gradients, and activations.
+
+## The solution: 4-bit quantization + full fine-tune
+
+Here's where it gets interesting. Instead of using QLoRA (which freezes most weights and only trains adapter layers), I went for a **full fine-tune on 4-bit quantized weights**.
+
+```python
+from transformers import BitsAndBytesConfig
+
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_dtype=torch.bfloat16,
+    bnb_4bit_use_double_quant=True,
+)
+```
+
+This approach:
+
+- **Reduces the memory footprint** from ~108GB to ~27GB for weights
+- **Maintains full model plasticity**, unlike LoRA/QLoRA
+- **Fits on a single B200** (180GB VRAM)
+
+<Callout type="info">
+  The key insight: QLoRA is great for adapting models to new tasks while preserving general
+  knowledge. But for low-resource language translation, the model needs to fundamentally
+  restructure its internal representations, which requires updating all parameters.
+</Callout>
+
+## Training setup
+
+| Parameter     | Value                    |
+| ------------- | ------------------------ |
+| Base model    | `google/gemma-3-27b-it`  |
+| Quantization  | 4-bit NF4                |
+| Learning rate | 2e-5                     |
+| Batch size    | 4 (gradient accumulation) |
+| Epochs        | ~3                       |
+| Hardware      | NVIDIA B200 (180GB VRAM) |
+| Training time | ~8 hours                 |
+
+I used a curated parallel corpus of Nahuatl-Spanish sentence pairs, focusing on modern Central Nahuatl for consistency.
+
+## Results
+
+The training curves tell the story better than any table:
+
+<TrainingCurves />
+
+By step 4,355 the model reached a **ChrF score of 97.48**, remarkably close to human-level translation quality.
+
+<Callout type="success">
+  For comparison: standard QLoRA approaches on the same data plateaued around 85–88 ChrF. The full
+  fine-tune gained nearly 10 points.
+</Callout>
+
+## Why ChrF?
+
+I chose ChrF (character n-gram F-score) over BLEU because:
+
+1. **Morphologically rich languages**: ChrF handles agglutinative languages better by comparing character sequences rather than word tokens
+2. **No tokenization dependency**: Nahuatl lacks standardized tokenization, making word-based metrics unreliable
+3. **Better correlation with human judgment** for morphologically complex languages
+
+## Example translations
+
+**Nahuatl**: _Nimitztlazohtla_ → **Model**: _Te amo_ (I love you)
+
+**Nahuatl**: _Tlein motocah?_ → **Model**: _¿Cómo te llamas?_ (What is your name?)
+
+**Nahuatl**: _Nicnequi atl_ → **Model**: _Quiero agua_ (I want water)
+
+The model correctly handles incorporated pronouns (_ni-_ = I, _mitz-_ = you), verb conjugations and aspects, and interrogative particles.
+
+## Try it yourself
+
+<LinkCard
+  title="NeuralTranslate Live Demo"
+  description="Try the Nahuatl-Spanish translator in your browser"
+  href="https://huggingface.co/spaces/Thermostatic/neuraltranslate-27b-mt-nah-es"
+/>
+
+<LinkCard
+  title="Models on HuggingFace"
+  description="Download the fine-tuned weights, plus the rest of the low-resource language line"
+  href="https://huggingface.co/Thermostatic"
+/>
+
+## What's next
+
+This project demonstrates that with the right approach, we can build high-quality NLP tools for endangered and low-resource languages. Since this post was written, the effort has grown into the **Rosettia** family (covering Quechua and more) plus speech recognition previews and even Akkadian embeddings.
+
+---
+
+_This project is dedicated to preserving indigenous languages through technology. If you're working on similar efforts, I'd love to connect._

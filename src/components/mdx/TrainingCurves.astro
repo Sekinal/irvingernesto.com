@@ -1,0 +1,51 @@
+---
+// Static SVG chart of the NeuralTranslate training run. No JS, theme-aware.
+const steps = [483, 967, 1451, 1935, 2419, 2903, 3387, 3871, 4355];
+const chrf = [65.62, 82.56, 92.97, 95.67, 96.59, 97.14, 97.34, 97.45, 97.48];
+const evalLoss = [0.9838, 0.3986, 0.1273, 0.0488, 0.024, 0.0124, 0.0061, 0.0023, 0.0014];
+
+const W = 720;
+const H = 320;
+const PAD = { top: 24, right: 52, bottom: 40, left: 52 };
+const plotW = W - PAD.left - PAD.right;
+const plotH = H - PAD.top - PAD.bottom;
+
+const x = (step: number) => PAD.left + ((step - steps[0]!) / (steps.at(-1)! - steps[0]!)) * plotW;
+const yChrf = (v: number) => PAD.top + (1 - (v - 60) / 40) * plotH;
+// Log scale for loss: 1e-3 .. 1e0
+const yLoss = (v: number) => PAD.top + (1 - (Math.log10(v) + 3) / 3) * plotH;
+
+const chrfPath = steps.map((s, i) => `${i ? 'L' : 'M'}${x(s).toFixed(1)},${yChrf(chrf[i]!).toFixed(1)}`).join(' ');
+const lossPath = steps.map((s, i) => `${i ? 'L' : 'M'}${x(s).toFixed(1)},${yLoss(evalLoss[i]!).toFixed(1)}`).join(' ');
+const chrfTicks = [60, 70, 80, 90, 100];
+const stepTicks = [500, 1500, 2500, 3500, 4355];
+---
+
+<figure class="not-prose border-line bg-card my-8 overflow-x-auto rounded-xl border p-4 md:p-6">
+  <figcaption class="data-label mb-4">Training run: eval loss vs ChrF, Gemma 3 27B</figcaption>
+  <svg viewBox={`0 0 ${W} ${H}`} class="min-w-[560px]" role="img" aria-label="Line chart: ChrF score climbs from 65.6 to 97.5 while eval loss falls from 0.98 to 0.0014 over 4355 steps.">
+    {chrfTicks.map((tick) => (
+      <>
+        <line x1={PAD.left} x2={W - PAD.right} y1={yChrf(tick)} y2={yChrf(tick)} stroke="var(--color-line)" stroke-width="1" />
+        <text x={PAD.left - 10} y={yChrf(tick) + 4} text-anchor="end" font-size="11" fill="var(--color-faint)" font-family="var(--font-mono)">{tick}</text>
+      </>
+    ))}
+    {stepTicks.map((tick) => (
+      <text x={x(tick)} y={H - 14} text-anchor="middle" font-size="11" fill="var(--color-faint)" font-family="var(--font-mono)">{tick}</text>
+    ))}
+    <text x={14} y={PAD.top - 8} font-size="11" fill="var(--color-muted)" font-family="var(--font-mono)">ChrF</text>
+    <text x={W - PAD.right + 8} y={PAD.top - 8} font-size="11" fill="var(--color-muted)" font-family="var(--font-mono)">loss (log)</text>
+
+    <path d={lossPath} fill="none" stroke="var(--color-faint)" stroke-width="1.5" stroke-dasharray="4 4" />
+    <path d={chrfPath} fill="none" stroke="var(--color-accent)" stroke-width="2.5" stroke-linecap="round" />
+    {steps.map((s, i) => (
+      <circle cx={x(s)} cy={yChrf(chrf[i]!)} r="3.5" fill="var(--color-accent)" />
+    ))}
+
+    <text x={x(4355) - 8} y={yChrf(97.48) - 12} text-anchor="end" font-size="12" font-weight="600" fill="var(--color-accent)" font-family="var(--font-mono)">97.48 ChrF</text>
+  </svg>
+  <div class="data-label mt-3 flex gap-6">
+    <span class="flex items-center gap-2"><span class="bg-accent inline-block h-0.5 w-5"></span>ChrF score</span>
+    <span class="text-faint flex items-center gap-2"><span class="inline-block h-0 w-5 border-t border-dashed border-current"></span>Eval loss</span>
+  </div>
+</figure>

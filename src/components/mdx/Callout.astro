@@ -1,0 +1,29 @@
+---
+interface Props {
+  type?: 'info' | 'success' | 'warning';
+  title?: string;
+}
+const { type = 'info', title } = Astro.props;
+const labels = { info: 'Note', success: 'Result', warning: 'Caveat' };
+---
+
+<aside
+  class:list={[
+    'not-prose border-line bg-card my-8 rounded-xl border p-5 md:p-6',
+    { 'callout-success': type === 'success', 'callout-warning': type === 'warning' },
+  ]}
+>
+  <p class="data-label callout-label mb-2">{title ?? labels[type]}</p>
+  <div class="text-fg/85 text-base leading-relaxed [&_a]:underline [&_code]:font-mono [&_code]:text-sm">
+    <slot />
+  </div>
+</aside>
+
+<style>
+  .callout-label {
+    color: var(--color-accent);
+  }
+  .callout-success .callout-label {
+    color: #22a06b;
+  }
+</style>

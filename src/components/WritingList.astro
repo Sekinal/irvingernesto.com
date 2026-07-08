@@ -1,0 +1,65 @@
+---
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+---
+
+<section class="mx-auto max-w-[1600px] px-5 pt-24 md:px-10 md:pt-36">
+  <div class="mb-12 flex items-end justify-between">
+    <div>
+      <p class="data-label mb-4" data-reveal>03 / Writing</p>
+      <h2 class="display-huge text-[clamp(2.5rem,6vw,5.5rem)]" data-reveal="mask">
+        Field notes<span class="text-accent">.</span>
+      </h2>
+    </div>
+    <a href="/blog" class="link-under data-label text-fg hidden pb-3 md:inline-block" data-reveal>
+      All posts →
+    </a>
+  </div>
+
+  <div class="grid gap-px md:grid-cols-3">
+    {
+      posts.map((post, i) => (
+        <a
+          href={`/blog/${post.id}`}
+          class="group border-line hover:bg-card flex flex-col justify-between gap-10 border p-7 transition-colors duration-300 md:min-h-72"
+          data-reveal
+          style={`--reveal-delay: ${i * 0.08}s`}
+        >
+          <div>
+            <div class="data-label flex items-center justify-between">
+              <span>{fmt(post.data.pubDate)}</span>
+              <svg
+                class="text-accent size-4 transition-transform duration-300 group-hover:rotate-45"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path d="M3 13 13 3M5.5 3H13v7.5" />
+              </svg>
+            </div>
+            <h3 class="font-display group-hover:text-accent mt-5 text-2xl font-medium tracking-tight transition-colors duration-300">
+              {post.data.title}
+            </h3>
+            <p class="text-muted mt-3 line-clamp-3 text-sm leading-relaxed">
+              {post.data.description}
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            {post.data.tags.slice(0, 3).map((tag) => (
+              <span class="data-label border-line rounded-full border px-2.5 py-1">{tag}</span>
+            ))}
+          </div>
+        </a>
+      ))
+    }
+  </div>
+
+  <a href="/blog" class="link-under data-label text-fg mt-8 inline-block md:hidden">All posts →</a>
+</section>

@@ -1,0 +1,120 @@
+---
+import { Image } from 'astro:assets';
+import portrait from '@/assets/irving.jpg';
+import { SITE, STATS, EXPERIENCE } from '@/lib/site';
+---
+
+<section id="about" class="mx-auto max-w-[1600px] scroll-mt-20 px-5 pt-24 md:px-10 md:pt-36">
+  <p class="data-label mb-4" data-reveal>02 / About</p>
+
+  <div class="grid gap-12 lg:grid-cols-[1.5fr_1fr] lg:gap-20">
+    <div>
+      <h2
+        class="font-display text-[clamp(1.75rem,3.6vw,3.25rem)] leading-[1.12] font-medium tracking-tight text-balance"
+        data-reveal="mask"
+      >
+        I'm a physicist who fell in love with systems that
+        <span class="text-accent">learn</span>, and the unglamorous engineering that makes them
+        actually work.
+      </h2>
+
+      <div
+        class="text-muted mt-8 max-w-2xl space-y-5 leading-relaxed"
+        data-reveal
+        style="--reveal-delay: 0.1s"
+      >
+        <p>
+          By day I'm the CTO of <a
+            href="https://roomiq.io"
+            target="_blank"
+            rel="noopener"
+            class="link-under text-fg">RoomIQ</a
+          >, where our pipeline ingests 80,000+ rental listings daily across 600+ US cities and
+          turns them into revenue forecasts investors can act on. I'm also the main developer of
+          <a href="https://steeleye.ai" target="_blank" rel="noopener" class="link-under text-fg"
+            >SteelEye</a
+          >, an operating system for steel contractors where I trained ML models that read
+          construction blueprints, detecting and naming structural members straight from CAD
+          vector data.
+        </p>
+        <p>
+          Before that: a physics degree (3.9 GPA), GPU-accelerated research pipelines, and a habit
+          of reverse-engineering things that weren't meant to be reverse-engineered: enterprise bot
+          protection, mobile APKs, and airline APIs.
+        </p>
+        <p>
+          On the open side, I publish models and datasets for indigenous and low-resource languages
+          (Nahuatl, Quechua, Akkadian) as
+          <a
+            href="https://huggingface.co/Thermostatic"
+            target="_blank"
+            rel="noopener"
+            class="link-under text-fg">Thermostatic</a
+          > on HuggingFace.
+        </p>
+      </div>
+    </div>
+
+    <figure class="group relative self-start overflow-hidden rounded-xl" data-reveal>
+      <Image
+        src={portrait}
+        alt={`Portrait of ${SITE.name}`}
+        width={720}
+        densities={[1, 2]}
+        class="portrait-img aspect-4/5 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+      />
+      <figcaption class="data-label absolute bottom-3 left-4 !text-white/85 mix-blend-difference">
+        {SITE.coords}
+      </figcaption>
+    </figure>
+  </div>
+
+  <div class="border-line mt-16 grid grid-cols-2 gap-px border md:grid-cols-4" data-reveal>
+    {
+      STATS.map((stat) => (
+        <div class="bg-card px-5 py-6 md:px-7 md:py-8">
+          <div class="font-display text-accent text-3xl font-semibold md:text-4xl">
+            {stat.value}
+          </div>
+          <div class="data-label mt-2 normal-case">{stat.label}</div>
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="mt-16" data-reveal>
+    <h3 class="data-label mb-5">Experience</h3>
+    <ul class="border-line divide-line divide-y border-t">
+      {
+        EXPERIENCE.map((job) => (
+          <li class="grid gap-x-8 gap-y-1 py-5 md:grid-cols-[9rem_20rem_1fr] md:items-baseline">
+            <span class="text-faint font-mono text-[0.6875rem] tracking-wider">{job.period}</span>
+            <span class="text-fg text-sm font-semibold">
+              {job.role} ·{' '}
+              {job.href ? (
+                <a href={job.href} target="_blank" rel="noopener" class="link-under">
+                  {job.org}
+                </a>
+              ) : (
+                job.org
+              )}
+            </span>
+            <span class="text-muted text-sm">{job.note}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .portrait-img {
+    filter: grayscale(1) contrast(1.05);
+    transition:
+      filter 0.6s ease,
+      transform 0.7s ease;
+  }
+  figure:hover .portrait-img {
+    filter: grayscale(0) contrast(1);
+  }
+</style>

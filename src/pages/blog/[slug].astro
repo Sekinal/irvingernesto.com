@@ -1,0 +1,130 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { SITE } from '@/lib/site';
+import 'katex/dist/katex.min.css';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content, headings, remarkPluginFrontmatter } = await render(post);
+const toc = headings.filter((h) => h.depth === 2);
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: post.data.title,
+  description: post.data.description,
+  datePublished: post.data.pubDate.toISOString(),
+  ...(post.data.updatedDate ? { dateModified: post.data.updatedDate.toISOString() } : {}),
+  author: { '@type': 'Person', name: SITE.name, url: SITE.url },
+  keywords: post.data.tags.join(', '),
+  url: new URL(`/blog/${post.id}`, SITE.url).href,
+};
+---
+
+<BaseLayout
+  title={`${post.data.title} · ${SITE.shortName}`}
+  description={post.data.description}
+  ogType="article"
+  publishedTime={post.data.pubDate.toISOString()}
+  tags={post.data.tags}
+  jsonLd={jsonLd}
+>
+  <article class="mx-auto max-w-[1600px] px-5 pt-32 md:px-10 md:pt-44">
+    <header class="mx-auto max-w-3xl">
+      <p class="data-label mb-6 flex flex-wrap items-center gap-x-3 gap-y-1" data-reveal>
+        <a href="/blog" class="link-under">← Writing</a>
+        <span class="text-faint">/</span>
+        <span>{fmt(post.data.pubDate)}</span>
+      </p>
+      <h1
+        class="font-display text-[clamp(2.25rem,5.5vw,4.5rem)] leading-[1.05] font-medium tracking-tight text-balance"
+        data-reveal="mask"
+      >
+        {post.data.title}
+      </h1>
+      <p
+        class="text-muted mt-6 text-lg leading-relaxed"
+        data-reveal
+        style="--reveal-delay: 0.1s"
+      >
+        {post.data.description}
+      </p>
+      <div class="mt-6 flex flex-wrap gap-2" data-reveal style="--reveal-delay: 0.15s">
+        {
+          post.data.tags.map((tag) => (
+            <span class="data-label border-line rounded-full border px-2.5 py-1">{tag}</span>
+          ))
+        }
+      </div>
+    </header>
+
+    <div
+      class="mx-auto mt-14 grid max-w-3xl gap-12 lg:max-w-none lg:grid-cols-[1fr_minmax(0,48rem)_1fr]"
+    >
+      <aside class="hidden lg:block">
+        {
+          toc.length > 2 && (
+            <nav class="sticky top-28 ml-auto max-w-56" aria-label="Table of contents">
+              <h2 class="data-label mb-4">Contents</h2>
+              <ol class="border-line flex flex-col gap-2.5 border-l">
+                {toc.map((heading) => (
+                  <li>
+                    <a
+                      href={`#${heading.slug}`}
+                      class="toc-link text-muted hover:text-fg -ml-px block border-l border-transparent pl-4 text-sm transition-colors"
+                      data-slug={heading.slug}
+                    >
+                      {heading.text}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )
+        }
+      </aside>
+
+      <div
+        class="prose prose-lg text-muted prose-headings:font-display prose-headings:font-medium prose-headings:tracking-tight prose-headings:text-fg prose-headings:scroll-mt-28 prose-strong:text-fg prose-code:text-fg prose-a:text-fg prose-a:decoration-(--color-accent) prose-a:underline-offset-4 prose-li:marker:text-accent prose-blockquote:border-accent prose-blockquote:text-fg prose-hr:border-line min-w-0"
+      >
+        <Content />
+      </div>
+      <div class="hidden lg:block"></div>
+    </div>
+
+    <footer class="border-line mx-auto mt-20 max-w-3xl border-t pt-10 pb-4 lg:max-w-none">
+      <a href="/blog" class="link-under data-label">← All posts</a>
+    </footer>
+  </article>
+
+  <script>
+    // Scroll-spy for the table of contents.
+    const links = document.querySelectorAll<HTMLAnchorElement>('.toc-link');
+    if (links.length) {
+      const map = new Map<string, HTMLAnchorElement>();
+      links.forEach((link) => map.set(link.dataset.slug!, link));
+      const spy = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              links.forEach((l) => l.classList.remove('text-fg', 'border-accent!'));
+              const link = map.get(entry.target.id);
+              link?.classList.add('text-fg', 'border-accent!');
+            }
+          }
+        },
+        { rootMargin: '-20% 0px -70% 0px' }
+      );
+      document
+        .querySelectorAll('.prose h2[id]')
+        .forEach((heading) => spy.observe(heading));
+    }
+  </script>
+</BaseLayout>

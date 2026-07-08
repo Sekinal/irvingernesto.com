@@ -1,0 +1,60 @@
+---
+import { getCollection } from 'astro:content';
+
+const projects = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<section id="work" class="mx-auto max-w-[1600px] scroll-mt-20 px-5 pt-24 md:px-10 md:pt-36">
+  <div class="mb-14 flex items-end justify-between gap-6">
+    <div>
+      <p class="data-label mb-4" data-reveal>01 / Selected work</p>
+      <h2 class="display-huge text-[clamp(2.5rem,6vw,5.5rem)]" data-reveal="mask">
+        Things I've built<span class="text-accent">.</span>
+      </h2>
+    </div>
+    <p class="text-muted hidden max-w-3xs pb-2 text-sm md:block" data-reveal>
+      Production systems with real users and real stakes. No demos.
+    </p>
+  </div>
+
+  <ol class="border-line border-t">
+    {
+      projects.map((project, i) => (
+        <li class="border-line border-b" data-reveal style={`--reveal-delay: ${i * 0.06}s`}>
+          <a
+            href={`/work/${project.id}`}
+            class="group hover:bg-card relative grid grid-cols-[auto_1fr] items-baseline gap-x-5 gap-y-3 px-2 py-8 transition-colors duration-300 md:grid-cols-[3.5rem_1fr_minmax(0,26rem)_auto] md:items-center md:gap-x-10 md:px-4 md:py-10"
+          >
+            <span class="data-label text-faint">0{i + 1}</span>
+            <span class="min-w-0">
+              <span class="font-display group-hover:text-accent block text-[clamp(1.75rem,4vw,3.25rem)] leading-none font-medium tracking-tight transition-colors duration-300">
+                {project.data.title}
+              </span>
+              <span class="data-label mt-2 block md:hidden">{project.data.role}</span>
+            </span>
+            <span class="col-span-2 min-w-0 md:col-span-1">
+              <span class="data-label hidden md:block">{project.data.role}</span>
+              <span class="text-muted mt-1 block text-sm leading-relaxed">
+                {project.data.tagline}
+              </span>
+            </span>
+            <span class="col-start-2 flex items-center gap-4 md:col-start-auto">
+              <span class="data-label text-faint">{project.data.year}</span>
+              <span class="border-line-strong group-hover:border-accent group-hover:bg-accent grid size-10 shrink-0 place-items-center rounded-full border transition-all duration-300 group-hover:text-white">
+                <svg
+                  class="size-4 transition-transform duration-300 group-hover:rotate-45"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M3 13 13 3M5.5 3H13v7.5" />
+                </svg>
+              </span>
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</section>

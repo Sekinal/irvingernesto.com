@@ -1,0 +1,55 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { SITE } from '@/lib/site';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+---
+
+<BaseLayout
+  title={`Writing · ${SITE.shortName}`}
+  description="Field notes on machine learning, data engineering, reverse engineering, and low-resource languages."
+>
+  <section class="mx-auto max-w-[1600px] px-5 pt-32 md:px-10 md:pt-44">
+    <p class="data-label mb-4" data-reveal>Writing / {posts.length} posts</p>
+    <h1 class="display-huge text-[clamp(3rem,9vw,8rem)]" data-reveal="mask">
+      Field notes<span class="text-accent">.</span>
+    </h1>
+    <p class="text-muted mt-6 max-w-lg leading-relaxed" data-reveal style="--reveal-delay: 0.15s">
+      Long-form write-ups of things I've built and broken: fine-tuning runs, scraping forensics,
+      and the occasional physics detour.
+    </p>
+
+    <ol class="border-line mt-16 border-t">
+      {
+        posts.map((post, i) => (
+          <li class="border-line border-b" data-reveal style={`--reveal-delay: ${Math.min(i * 0.05, 0.3)}s`}>
+            <a
+              href={`/blog/${post.id}`}
+              class="group hover:bg-card grid gap-x-10 gap-y-2 px-2 py-8 transition-colors duration-300 md:grid-cols-[10rem_1fr_auto] md:items-baseline md:px-4 md:py-10"
+            >
+              <span class="data-label text-faint">{fmt(post.data.pubDate)}</span>
+              <span class="min-w-0">
+                <span class="font-display group-hover:text-accent block text-[clamp(1.5rem,3.5vw,2.75rem)] leading-tight font-medium tracking-tight transition-colors duration-300">
+                  {post.data.title}
+                </span>
+                <span class="text-muted mt-2 block max-w-2xl text-sm leading-relaxed">
+                  {post.data.description}
+                </span>
+              </span>
+              <span class="mt-2 flex flex-wrap gap-2 md:mt-0">
+                {post.data.tags.slice(0, 2).map((tag) => (
+                  <span class="data-label border-line rounded-full border px-2.5 py-1">{tag}</span>
+                ))}
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+</BaseLayout>

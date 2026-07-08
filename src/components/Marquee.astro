@@ -1,0 +1,19 @@
+---
+import { MARQUEE } from '@/lib/site';
+const items = [...MARQUEE, ...MARQUEE];
+---
+
+<div class="border-line overflow-hidden border-y py-4" aria-hidden="true">
+  <div class="marquee-track flex w-max items-center gap-8" style="--marquee-speed: 55s">
+    {
+      items.map((item) => (
+        <span class="flex items-center gap-8 whitespace-nowrap">
+          <span class="font-display text-fg/70 text-xl font-medium tracking-tight uppercase">
+            {item}
+          </span>
+          <span class="text-accent text-[0.5rem]">✦</span>
+        </span>
+      ))
+    }
+  </div>
+</div>

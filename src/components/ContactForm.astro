@@ -1,0 +1,165 @@
+---
+const topics = ['LLM fine-tuning', 'Data pipeline', 'Scraping infra', 'Full platform', 'Other'];
+---
+
+<form id="contact-form" class="flex flex-col gap-8" novalidate>
+  <input type="hidden" name="access_key" value="3b6584a2-d3dd-40b9-b95e-978a9a2c5d28" />
+  <input type="hidden" name="topic" id="topic-field" value="" />
+  <input
+    type="checkbox"
+    name="botcheck"
+    class="absolute -left-2499 size-px opacity-0"
+    tabindex="-1"
+    autocomplete="off"
+  />
+
+  <fieldset>
+    <legend class="data-label mb-4">What do you need?</legend>
+    <div class="flex flex-wrap gap-2">
+      {
+        topics.map((topic) => (
+          <button
+            type="button"
+            data-topic={topic}
+            class="topic-chip border-line hover:border-line-strong data-label cursor-pointer rounded-full border px-4 py-2 transition-all duration-200"
+          >
+            {topic}
+          </button>
+        ))
+      }
+    </div>
+  </fieldset>
+
+  <div class="grid gap-8 sm:grid-cols-2">
+    <div class="field">
+      <label for="cf-name" class="data-label">Name</label>
+      <input id="cf-name" type="text" name="name" required autocomplete="name" placeholder="Ada Lovelace" />
+    </div>
+    <div class="field">
+      <label for="cf-email" class="data-label">Email</label>
+      <input id="cf-email" type="email" name="email" required autocomplete="email" placeholder="ada@analytical.engine" />
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="cf-message" class="data-label">The problem</label>
+    <textarea
+      id="cf-message"
+      name="message"
+      rows="3"
+      required
+      placeholder="Tell me what you're trying to build: scale, constraints, deadline."></textarea>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-5">
+    <button
+      id="cf-submit"
+      type="submit"
+      class="group border-line-strong hover:border-accent hover:bg-accent relative flex cursor-pointer items-center gap-3 rounded-full border px-7 py-3.5 transition-all duration-300 hover:text-white disabled:pointer-events-none disabled:opacity-50"
+    >
+      <span class="data-label !text-current" data-state="idle">Send it</span>
+      <span class="data-label !text-current hidden" data-state="sending">Transmitting…</span>
+      <span class="data-label !text-current hidden" data-state="sent">Received, talk soon ✓</span>
+      <svg
+        class="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+      >
+        <path d="M3 13 13 3M5.5 3H13v7.5"></path>
+      </svg>
+    </button>
+    <p id="cf-error" class="text-accent-fg hidden text-sm" role="alert">
+      Something broke. Email me directly instead.
+    </p>
+  </div>
+</form>
+
+<style>
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .field input,
+  .field textarea {
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--color-line-strong);
+    padding: 0.45rem 0 0.7rem;
+    font-size: 1.05rem;
+    color: var(--color-fg);
+    transition: border-color 0.3s ease;
+    resize: vertical;
+  }
+  .field input::placeholder,
+  .field textarea::placeholder {
+    color: var(--color-faint);
+  }
+  .field input:focus,
+  .field textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+  .topic-chip[aria-pressed='true'] {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: #fff;
+  }
+</style>
+
+<script>
+  const form = document.getElementById('contact-form') as HTMLFormElement;
+  const submit = document.getElementById('cf-submit') as HTMLButtonElement;
+  const errorEl = document.getElementById('cf-error')!;
+  const topicField = document.getElementById('topic-field') as HTMLInputElement;
+
+  const setState = (state: 'idle' | 'sending' | 'sent') => {
+    submit.querySelectorAll<HTMLElement>('[data-state]').forEach((el) => {
+      el.classList.toggle('hidden', el.dataset.state !== state);
+    });
+    submit.disabled = state !== 'idle';
+  };
+
+  document.querySelectorAll<HTMLButtonElement>('.topic-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const active = chip.getAttribute('aria-pressed') === 'true';
+      document
+        .querySelectorAll('.topic-chip')
+        .forEach((c) => c.setAttribute('aria-pressed', 'false'));
+      chip.setAttribute('aria-pressed', String(!active));
+      topicField.value = active ? '' : (chip.dataset.topic ?? '');
+    });
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    errorEl.classList.add('hidden');
+    setState('sending');
+
+    const data = Object.fromEntries(new FormData(form));
+    const name = String(data.name ?? '').slice(0, 120);
+    const topic = String(data.topic ?? '');
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          subject: `[irvingernesto.com] ${topic || 'Inquiry'} · ${name}`,
+          from_name: 'irvingernesto.com',
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setState('sent');
+      form.querySelectorAll<HTMLInputElement>('input:not([type=hidden]), textarea').forEach(
+        (el) => (el.value = '')
+      );
+    } catch {
+      setState('idle');
+      errorEl.classList.remove('hidden');
+    }
+  });
+</script>

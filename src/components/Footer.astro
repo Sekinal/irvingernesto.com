@@ -1,0 +1,91 @@
+---
+import { SITE, SOCIALS } from '@/lib/site';
+import ContactForm from '@/components/ContactForm.astro';
+const year = new Date().getFullYear();
+---
+
+<footer id="contact" class="border-line relative overflow-hidden border-t">
+  <div class="mx-auto max-w-[1600px] px-5 pt-24 pb-10 md:px-10 md:pt-36">
+    <p class="data-label mb-8" data-reveal>04 / Contact</p>
+    <h2
+      class="display-huge text-fg max-w-5xl text-[clamp(2.75rem,8vw,7.5rem)]"
+      data-reveal="mask"
+    >
+      Have a hard problem?<br />
+      <span class="text-accent">Let's talk.</span>
+    </h2>
+
+    <div class="mt-14 grid gap-14 lg:grid-cols-[1.3fr_1fr] lg:gap-24">
+      <div data-reveal style="--reveal-delay: 0.15s">
+        <ContactForm />
+      </div>
+      <div class="flex flex-col justify-between gap-10" data-reveal style="--reveal-delay: 0.25s">
+        <div>
+          <p class="data-label mb-3">Prefer email?</p>
+          <a
+            href={`mailto:${SITE.email}`}
+            class="link-under font-display text-fg inline-block text-[clamp(1.15rem,2.2vw,1.75rem)] font-medium tracking-tight break-all"
+          >
+            {SITE.email}
+          </a>
+        </div>
+        <p class="text-muted max-w-sm text-sm leading-relaxed">
+          I take on a small number of consulting and build engagements, usually where ML meets
+          hard infrastructure. If it sounds impossible, that's the fun kind.
+        </p>
+      </div>
+    </div>
+
+    <div
+      class="border-line mt-20 grid grid-cols-2 gap-8 border-t pt-10 md:grid-cols-4"
+      data-reveal
+      style="--reveal-delay: 0.1s"
+    >
+      {
+        SOCIALS.map((social) => (
+          <a
+            href={social.href}
+            target={social.href.startsWith('http') ? '_blank' : undefined}
+            rel="noopener"
+            class="group"
+          >
+            <span class="data-label block">{social.label}</span>
+            <span class="link-under text-fg/85 group-hover:text-fg mt-1 inline-block text-sm font-medium break-all transition-colors">
+              {social.handle}
+            </span>
+          </a>
+        ))
+      }
+    </div>
+
+    <div
+      class="text-faint mt-16 flex flex-col gap-2 font-mono text-[0.6875rem] tracking-wider uppercase sm:flex-row sm:items-center sm:justify-between"
+    >
+      <span>© {year} {SITE.name}</span>
+      <span>{SITE.coords}</span>
+      <span>Local time <span id="local-time">--:--</span> GMT-6</span>
+    </div>
+  </div>
+
+  <div
+    aria-hidden="true"
+    class="font-display text-fg/[0.035] pointer-events-none absolute -bottom-[0.22em] left-1/2 w-max -translate-x-1/2 text-[22vw] font-semibold whitespace-nowrap select-none"
+  >
+    IRVING ERNESTO
+  </div>
+</footer>
+
+<script>
+  const el = document.getElementById('local-time');
+  const tick = () => {
+    if (!el) return;
+    el.textContent = new Intl.DateTimeFormat('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'America/Mexico_City',
+    }).format(new Date());
+  };
+  tick();
+  setInterval(tick, 30_000);
+</script>
