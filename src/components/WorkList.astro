@@ -7,7 +7,7 @@ const projects = (await getCollection('work')).sort((a, b) => a.data.order - b.d
 <section id="work" class="mx-auto max-w-[1600px] scroll-mt-20 px-5 pt-24 md:px-10 md:pt-36">
   <div class="mb-14 flex items-end justify-between gap-6">
     <div>
-      <p class="data-label mb-4" data-reveal>01 / Selected work</p>
+      <p class="data-label mb-4" data-reveal data-scramble>01 / Selected work</p>
       <h2 class="display-huge text-[clamp(2.5rem,6vw,5.5rem)]" data-reveal="mask">
         Things I've built<span class="text-accent">.</span>
       </h2>
@@ -23,11 +23,14 @@ const projects = (await getCollection('work')).sort((a, b) => a.data.order - b.d
         <li class="border-line border-b" data-reveal style={`--reveal-delay: ${i * 0.06}s`}>
           <a
             href={`/work/${project.id}`}
-            class="group hover:bg-card relative grid grid-cols-[auto_1fr] items-baseline gap-x-5 gap-y-3 px-2 py-8 transition-colors duration-300 md:grid-cols-[3.5rem_1fr_minmax(0,26rem)_auto] md:items-center md:gap-x-10 md:px-4 md:py-10"
+            class="work-row group hover:bg-card relative grid grid-cols-[auto_1fr] items-baseline gap-x-5 gap-y-3 px-2 py-8 transition-colors duration-300 md:grid-cols-[3.5rem_1fr_minmax(0,26rem)_auto] md:items-center md:gap-x-10 md:px-4 md:py-10"
           >
             <span class="data-label text-faint">0{i + 1}</span>
             <span class="min-w-0">
-              <span class="font-display group-hover:text-accent block text-[clamp(1.75rem,4vw,3.25rem)] leading-none font-medium tracking-tight transition-colors duration-300">
+              <span
+                class="font-display group-hover:text-accent block text-[clamp(1.75rem,4vw,3.25rem)] leading-none font-medium tracking-tight transition-colors duration-300"
+                transition:name={`work-title-${project.id}`}
+              >
                 {project.data.title}
               </span>
               <span class="data-label mt-2 block md:hidden">{project.data.role}</span>
@@ -58,3 +61,36 @@ const projects = (await getCollection('work')).sort((a, b) => a.data.order - b.d
     }
   </ol>
 </section>
+
+<div id="work-pill" aria-hidden="true">View case ↗</div>
+
+<script>
+  // Cursor-following "View case" pill over work rows. Fine pointers only.
+  let ctrl: AbortController | null = null;
+
+  document.addEventListener('astro:page-load', () => {
+    ctrl?.abort();
+    const pill = document.getElementById('work-pill');
+    const rows = document.querySelectorAll<HTMLElement>('.work-row');
+    if (!pill || !rows.length) return;
+    if (!matchMedia('(pointer: fine)').matches) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    ctrl = new AbortController();
+    const { signal } = ctrl;
+
+    rows.forEach((row) => {
+      row.addEventListener(
+        'pointermove',
+        (e) => {
+          pill.style.left = `${e.clientX}px`;
+          pill.style.top = `${e.clientY}px`;
+          pill.classList.add('is-on');
+        },
+        { signal, passive: true }
+      );
+      row.addEventListener('pointerleave', () => pill.classList.remove('is-on'), { signal });
+      row.addEventListener('click', () => pill.classList.remove('is-on'), { signal });
+    });
+  });
+</script>

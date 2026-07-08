@@ -105,7 +105,10 @@ const jsonLd = {
   </article>
 
   <script>
-    // Scroll-spy for the table of contents.
+    // Scroll-spy for the table of contents. Re-initialized per page view.
+    let spyObserver: IntersectionObserver | undefined;
+    document.addEventListener('astro:page-load', () => {
+    spyObserver?.disconnect();
     const links = document.querySelectorAll<HTMLAnchorElement>('.toc-link');
     if (links.length) {
       const map = new Map<string, HTMLAnchorElement>();
@@ -125,6 +128,8 @@ const jsonLd = {
       document
         .querySelectorAll('.prose h2[id]')
         .forEach((heading) => spy.observe(heading));
+      spyObserver = spy;
     }
+    });
   </script>
 </BaseLayout>

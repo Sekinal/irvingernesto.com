@@ -1,0 +1,151 @@
+---
+// Custom cursor (dot + trailing ring) and magnetic hover for .magnetic elements.
+// Only active on fine pointers with motion allowed; native cursor kept on inputs.
+---
+
+<div id="cursor-dot" aria-hidden="true"></div>
+<div id="cursor-ring" aria-hidden="true"></div>
+
+<style is:global>
+  #cursor-dot,
+  #cursor-ring {
+    display: none;
+  }
+
+  @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    body:not([data-no-cursor]) {
+      cursor: none;
+    }
+    body:not([data-no-cursor]) a,
+    body:not([data-no-cursor]) button,
+    body:not([data-no-cursor]) [role='button'],
+    body:not([data-no-cursor]) summary {
+      cursor: none;
+    }
+
+    #cursor-dot,
+    #cursor-ring {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      pointer-events: none;
+      border-radius: 999px;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    #cursor-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--color-accent);
+    }
+    #cursor-ring {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--color-line-strong);
+      transition:
+        opacity 0.25s ease,
+        width 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+        height 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 0.3s ease,
+        background-color 0.3s ease;
+    }
+    html.cursor-hot #cursor-ring {
+      width: 52px;
+      height: 52px;
+      border-color: var(--color-accent);
+      background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+    }
+    html.cursor-hot #cursor-dot {
+      opacity: 0;
+    }
+  }
+
+  .magnetic {
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+  }
+</style>
+
+<script>
+  const fine = matchMedia('(pointer: fine)');
+  const noMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+  let raf = 0;
+  let targetX = -100;
+  let targetY = -100;
+  let ringX = -100;
+  let ringY = -100;
+  let bound = false;
+  let magnetCtrl: AbortController | null = null;
+
+  function loop() {
+    const dot = document.getElementById('cursor-dot');
+    const ring = document.getElementById('cursor-ring');
+    if (dot && ring) {
+      ringX += (targetX - ringX) * 0.16;
+      ringY += (targetY - ringY) * 0.16;
+      dot.style.transform = `translate(${targetX - 3}px, ${targetY - 3}px)`;
+      const half = ring.offsetWidth / 2;
+      ring.style.transform = `translate(${ringX - half}px, ${ringY - half}px)`;
+    }
+    raf = requestAnimationFrame(loop);
+  }
+
+  function show(visible: boolean) {
+    const dot = document.getElementById('cursor-dot');
+    const ring = document.getElementById('cursor-ring');
+    if (!dot || !ring) return;
+    dot.style.opacity = visible ? '1' : '0';
+    ring.style.opacity = visible ? '1' : '0';
+  }
+
+  function bindGlobal() {
+    if (bound) return;
+    bound = true;
+
+    document.addEventListener(
+      'pointermove',
+      (e) => {
+        targetX = e.clientX;
+        targetY = e.clientY;
+        show(true);
+      },
+      { passive: true }
+    );
+    document.addEventListener('pointerleave', () => show(false));
+    document.addEventListener('pointerover', (e) => {
+      const hot = (e.target as HTMLElement).closest('a, button, [role="button"], summary');
+      document.documentElement.classList.toggle('cursor-hot', !!hot);
+    });
+  }
+
+  function bindMagnetic() {
+    magnetCtrl?.abort();
+    magnetCtrl = new AbortController();
+    const { signal } = magnetCtrl;
+    document.querySelectorAll<HTMLElement>('.magnetic').forEach((el) => {
+      const STRENGTH = 0.35;
+      el.addEventListener(
+        'pointermove',
+        (e) => {
+          const rect = el.getBoundingClientRect();
+          const dx = e.clientX - (rect.left + rect.width / 2);
+          const dy = e.clientY - (rect.top + rect.height / 2);
+          el.style.transform = `translate(${dx * STRENGTH}px, ${dy * STRENGTH}px)`;
+        },
+        { signal, passive: true }
+      );
+      el.addEventListener('pointerleave', () => (el.style.transform = ''), { signal });
+    });
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    if (!fine.matches || noMotion.matches) return;
+    bindGlobal();
+    bindMagnetic();
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(loop);
+  });
+</script>

@@ -38,7 +38,11 @@ const jsonLd = {
         <span class="text-faint">/</span>
         <span>{project.data.year}</span>
       </p>
-      <h1 class="display-huge text-[clamp(3rem,9vw,9rem)]" data-reveal="mask">
+      <h1
+        class="display-huge text-[clamp(3rem,9vw,9rem)]"
+        data-reveal="mask"
+        transition:name={`work-title-${project.id}`}
+      >
         {project.data.title}<span class="text-accent">.</span>
       </h1>
       <div
@@ -113,7 +117,7 @@ const jsonLd = {
           {next.data.title}
         </span>
         <span
-          class="border-line-strong group-hover:border-accent group-hover:bg-accent grid size-12 shrink-0 place-items-center rounded-full border transition-all duration-300 group-hover:text-white"
+          class="magnetic border-line-strong group-hover:border-accent group-hover:bg-accent grid size-12 shrink-0 place-items-center rounded-full border transition-colors duration-300 group-hover:text-white"
         >
           <svg
             class="size-5 transition-transform duration-300 group-hover:rotate-45"

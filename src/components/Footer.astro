@@ -6,7 +6,7 @@ const year = new Date().getFullYear();
 
 <footer id="contact" class="border-line relative overflow-hidden border-t">
   <div class="mx-auto max-w-[1600px] px-5 pt-24 pb-10 md:px-10 md:pt-36">
-    <p class="data-label mb-8" data-reveal>04 / Contact</p>
+    <p class="data-label mb-8" data-reveal data-scramble>05 / Contact</p>
     <h2
       class="display-huge text-fg max-w-5xl text-[clamp(2.75rem,8vw,7.5rem)]"
       data-reveal="mask"
@@ -37,7 +37,7 @@ const year = new Date().getFullYear();
     </div>
 
     <div
-      class="border-line mt-20 grid grid-cols-2 gap-8 border-t pt-10 md:grid-cols-4"
+      class="border-line mt-20 grid grid-cols-2 gap-8 border-t pt-10 md:grid-cols-5"
       data-reveal
       style="--reveal-delay: 0.1s"
     >
@@ -76,8 +76,8 @@ const year = new Date().getFullYear();
 </footer>
 
 <script>
-  const el = document.getElementById('local-time');
   const tick = () => {
+    const el = document.getElementById('local-time');
     if (!el) return;
     el.textContent = new Intl.DateTimeFormat('en-US', {
       hour: '2-digit',
@@ -86,6 +86,6 @@ const year = new Date().getFullYear();
       timeZone: 'America/Mexico_City',
     }).format(new Date());
   };
-  tick();
+  document.addEventListener('astro:page-load', tick);
   setInterval(tick, 30_000);
 </script>

@@ -15,7 +15,7 @@ const links = [
     aria-label="Main"
   >
     <a href="/" class="font-display text-fg text-lg font-semibold tracking-tight">
-      IEQ<span class="text-accent">.</span>
+      ieqr<span class="text-accent">.</span>
     </a>
 
     <div class="data-label hidden items-center gap-8 md:flex">
@@ -101,17 +101,21 @@ const links = [
 </style>
 
 <script>
-  const toggle = document.getElementById('nav-toggle')!;
-  const menu = document.getElementById('nav-menu')!;
-  toggle.addEventListener('click', () => {
-    const open = toggle.getAttribute('aria-expanded') === 'true';
-    toggle.setAttribute('aria-expanded', String(!open));
-    menu.classList.toggle('hidden', open);
-  });
-  menu.addEventListener('click', (e) => {
-    if ((e.target as HTMLElement).tagName === 'A') {
-      toggle.setAttribute('aria-expanded', 'false');
-      menu.classList.add('hidden');
-    }
+  document.addEventListener('astro:page-load', () => {
+    const toggle = document.getElementById('nav-toggle');
+    const menu = document.getElementById('nav-menu');
+    if (!toggle || !menu || toggle.dataset.bound) return;
+    toggle.dataset.bound = 'true';
+    toggle.addEventListener('click', () => {
+      const open = toggle.getAttribute('aria-expanded') === 'true';
+      toggle.setAttribute('aria-expanded', String(!open));
+      menu.classList.toggle('hidden', open);
+    });
+    menu.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).tagName === 'A') {
+        toggle.setAttribute('aria-expanded', 'false');
+        menu.classList.add('hidden');
+      }
+    });
   });
 </script>

@@ -1,0 +1,122 @@
+---
+const repos = [
+  {
+    name: 'codecontexter',
+    lang: 'Rust',
+    desc: 'Lightning-fast CLI that packs a whole codebase into one LLM-ready file. Respects .gitignore, redacts secrets.',
+    href: 'https://github.com/Sekinal/codecontexter',
+  },
+  {
+    name: 'camoufox-mcp',
+    lang: 'Python',
+    desc: 'MCP server that lets AI agents drive an anti-detect Firefox: fingerprint spoofing, request capture, human-like input.',
+    href: 'https://github.com/Sekinal/camoufox-mcp',
+  },
+  {
+    name: 'tlshttp',
+    lang: 'Python',
+    desc: 'Modern wrapper for tls-client with an httpx-like API, browser TLS fingerprinting, and async support via anyio.',
+    href: 'https://github.com/Sekinal/tlshttp',
+  },
+  {
+    name: 'jspace-refusal',
+    lang: 'Python',
+    desc: 'Interpretability research: locating and editing refusal directions in neural networks via Jacobian analysis.',
+    href: 'https://github.com/Sekinal/jspace-refusal',
+  },
+  {
+    name: 'neblinia-speech',
+    lang: 'Python',
+    desc: 'Foundational ASR for Mexican indigenous languages, trained with GSPO reinforcement learning.',
+    href: 'https://github.com/Sekinal/neblinia-speech',
+  },
+  {
+    name: 'ppocrv6-fast-cpu',
+    lang: 'Python',
+    desc: 'Lossless CPU inference for PP-OCRv6 detection + recognition through OpenVINO. OCR without the GPU bill.',
+    href: 'https://github.com/Sekinal/ppocrv6-fast-cpu',
+  },
+];
+---
+
+<section class="mx-auto max-w-[1600px] px-5 pt-24 md:px-10 md:pt-36">
+  <div class="mb-12 flex items-end justify-between">
+    <div>
+      <p class="data-label mb-4" data-reveal data-scramble>03 / Open source</p>
+      <h2 class="display-huge text-[clamp(2.5rem,6vw,5.5rem)]" data-reveal="mask">
+        In the open<span class="text-accent">.</span>
+      </h2>
+    </div>
+    <div class="hidden flex-col items-end gap-2 pb-3 md:flex" data-reveal>
+      <a
+        href="https://github.com/Sekinal"
+        target="_blank"
+        rel="noopener"
+        class="link-under data-label text-fg">github.com/Sekinal →</a
+      >
+      <a
+        href="https://huggingface.co/Thermostatic"
+        target="_blank"
+        rel="noopener"
+        class="link-under data-label text-fg">huggingface.co/Thermostatic →</a
+      >
+    </div>
+  </div>
+
+  <div class="grid gap-px sm:grid-cols-2 lg:grid-cols-3">
+    {
+      repos.map((repo, i) => (
+        <a
+          href={repo.href}
+          target="_blank"
+          rel="noopener"
+          class="group border-line hover:bg-card flex flex-col justify-between gap-8 border p-6 transition-colors duration-300"
+          data-reveal
+          style={`--reveal-delay: ${(i % 3) * 0.07}s`}
+        >
+          <div>
+            <div class="flex items-center justify-between gap-4">
+              <h3 class="group-hover:text-accent font-mono text-base font-semibold tracking-tight transition-colors duration-300">
+                {repo.name}
+              </h3>
+              <svg
+                class="text-faint group-hover:text-accent size-4 shrink-0 transition-all duration-300 group-hover:rotate-45"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path d="M3 13 13 3M5.5 3H13v7.5" />
+              </svg>
+            </div>
+            <p class="text-muted mt-3 text-sm leading-relaxed">{repo.desc}</p>
+          </div>
+          <span class="data-label flex items-center gap-2">
+            <span
+              class:list={[
+                'inline-block size-2 rounded-full',
+                repo.lang === 'Rust' ? 'bg-[#dea584]' : 'bg-[#3572A5]',
+              ]}
+            />
+            {repo.lang}
+          </span>
+        </a>
+      ))
+    }
+  </div>
+
+  <div class="mt-8 flex flex-col gap-2 md:hidden">
+    <a
+      href="https://github.com/Sekinal"
+      target="_blank"
+      rel="noopener"
+      class="link-under data-label text-fg">github.com/Sekinal →</a
+    >
+    <a
+      href="https://huggingface.co/Thermostatic"
+      target="_blank"
+      rel="noopener"
+      class="link-under data-label text-fg">huggingface.co/Thermostatic →</a
+    >
+  </div>
+</section>

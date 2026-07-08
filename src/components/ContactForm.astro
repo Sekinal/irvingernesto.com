@@ -110,10 +110,13 @@ const topics = ['LLM fine-tuning', 'Data pipeline', 'Scraping infra', 'Full plat
 </style>
 
 <script>
-  const form = document.getElementById('contact-form') as HTMLFormElement;
-  const submit = document.getElementById('cf-submit') as HTMLButtonElement;
-  const errorEl = document.getElementById('cf-error')!;
-  const topicField = document.getElementById('topic-field') as HTMLInputElement;
+  document.addEventListener('astro:page-load', () => {
+  const form = document.getElementById('contact-form') as HTMLFormElement | null;
+  const submit = document.getElementById('cf-submit') as HTMLButtonElement | null;
+  const errorEl = document.getElementById('cf-error');
+  const topicField = document.getElementById('topic-field') as HTMLInputElement | null;
+  if (!form || !submit || !errorEl || !topicField || form.dataset.bound) return;
+  form.dataset.bound = 'true';
 
   const setState = (state: 'idle' | 'sending' | 'sent') => {
     submit.querySelectorAll<HTMLElement>('[data-state]').forEach((el) => {
@@ -161,5 +164,6 @@ const topics = ['LLM fine-tuning', 'Data pipeline', 'Scraping infra', 'Full plat
       setState('idle');
       errorEl.classList.remove('hidden');
     }
+  });
   });
 </script>

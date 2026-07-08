@@ -13,6 +13,7 @@ export const SITE = {
 export const SOCIALS = [
   { label: 'GitHub', handle: 'Sekinal', href: 'https://github.com/Sekinal' },
   { label: 'HuggingFace', handle: 'Thermostatic', href: 'https://huggingface.co/Thermostatic' },
+  { label: 'X', handle: '@ieqr_', href: 'https://x.com/ieqr_' },
   { label: 'LinkedIn', handle: 'ieqr', href: 'https://www.linkedin.com/in/ieqr' },
   { label: 'Email', handle: 'business@irvingernesto.com', href: 'mailto:business@irvingernesto.com' },
 ] as const;

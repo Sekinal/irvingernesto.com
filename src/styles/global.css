@@ -113,12 +113,32 @@ body::after {
 }
 
 /* ---------------------------------- */
-/* Theme-switch circular reveal        */
+/* View transitions                    */
+/* Theme switch: circular reveal.      */
+/* Page navigation: quick fade + rise. */
 /* ---------------------------------- */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
+}
+@keyframes vt-out {
+  to {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+@keyframes vt-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+html:not(.theme-transition)::view-transition-old(root) {
+  animation: vt-out 0.22s ease-in both;
+}
+html:not(.theme-transition)::view-transition-new(root) {
+  animation: vt-in 0.3s 0.05s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 ::view-transition-old(root) {
   z-index: 1;
@@ -207,6 +227,43 @@ html.theme-transition::view-transition-new(root) {
 [data-reveal='mask'].is-visible {
   transform: none;
   mask-position: 0 0;
+}
+
+/* ---------------------------------- */
+/* Hero kinetic letters                */
+/* ---------------------------------- */
+.kinetic-ch {
+  display: inline-block;
+  font-variation-settings: 'wght' var(--ch-wght, 550);
+  transition: font-variation-settings 0.25s ease, color 0.25s ease;
+}
+
+/* Cursor-following pill on work rows  */
+#work-pill {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.6);
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  background: var(--color-accent);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.7rem 1.1rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+#work-pill.is-on {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
 }
 
 /* ---------------------------------- */

@@ -53,8 +53,11 @@
 </style>
 
 <script>
-  const btn = document.getElementById('theme-toggle')!;
-  btn.addEventListener('click', () => {
+  document.addEventListener('astro:page-load', () => {
+    const btn = document.getElementById('theme-toggle');
+    if (!btn || btn.dataset.bound) return;
+    btn.dataset.bound = 'true';
+    btn.addEventListener('click', () => {
     const html = document.documentElement;
     const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
     localStorage.setItem('theme', next);
@@ -80,5 +83,6 @@
     document
       .startViewTransition(apply)
       .finished.finally(() => html.classList.remove('theme-transition'));
+    });
   });
 </script>

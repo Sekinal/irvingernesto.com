@@ -1,8 +1,10 @@
 ---
 import '@/styles/global.css';
 import { SEO } from 'astro-seo';
+import { ClientRouter } from 'astro:transitions';
 import Nav from '@/components/Nav.astro';
 import Footer from '@/components/Footer.astro';
+import CursorFX from '@/components/CursorFX.astro';
 import { SITE } from '@/lib/site';
 
 interface Props {
@@ -28,7 +30,7 @@ const defaultJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Person',
   name: SITE.name,
-  alternateName: 'Irving Ernesto',
+  alternateName: ['Irving Ernesto', 'ieqr'],
   url: SITE.url,
   email: SITE.email,
   jobTitle: 'AI Engineer & Physicist',
@@ -44,6 +46,7 @@ const defaultJsonLd = {
   sameAs: [
     'https://github.com/Sekinal',
     'https://huggingface.co/Thermostatic',
+    'https://x.com/ieqr_',
     'https://www.linkedin.com/in/ieqr',
   ],
 };
@@ -83,6 +86,7 @@ const defaultJsonLd = {
         ],
       }}
     />
+    <ClientRouter />
     <link
       rel="preload"
       href="/fonts/ClashDisplay-Variable.woff2"
@@ -103,12 +107,17 @@ const defaultJsonLd = {
       is:inline
     />
     <script is:inline>
-      // Theme init: runs before paint to avoid flash.
+      // Theme init: runs before paint to avoid flash, and re-applies after
+      // client-side navigation swaps in a fresh <html>.
       (() => {
-        const stored = localStorage.getItem('theme');
-        const system = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-        document.documentElement.dataset.theme =
-          stored === 'light' || stored === 'dark' ? stored : system;
+        const apply = () => {
+          const stored = localStorage.getItem('theme');
+          const system = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+          document.documentElement.dataset.theme =
+            stored === 'light' || stored === 'dark' ? stored : system;
+        };
+        apply();
+        document.addEventListener('astro:after-swap', apply);
       })();
     </script>
   </head>
@@ -124,21 +133,53 @@ const defaultJsonLd = {
       <slot />
     </main>
     <Footer />
+    <CursorFX />
 
     <script>
-      // Scroll reveals: one shared IntersectionObserver.
-      const observer = new IntersectionObserver(
-        (entries) => {
-          for (const entry of entries) {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('is-visible');
-              observer.unobserve(entry.target);
+      // Scroll reveals + label scramble. Re-initialized on every page view
+      // (astro:page-load fires on initial load and after each client-side nav).
+      let observer: IntersectionObserver | undefined;
+      const GLYPHS = '!<>-_\\/[]{}=+*^?#0123456789ABCDEF';
+      const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function scramble(el: HTMLElement) {
+        if (reduceMotion() || el.dataset.scrambled) return;
+        el.dataset.scrambled = 'true';
+        const original = el.textContent ?? '';
+        const start = performance.now();
+        const DURATION = 650;
+        const step = (now: number) => {
+          const progress = Math.min(1, (now - start) / DURATION);
+          const settled = Math.floor(original.length * progress);
+          el.textContent =
+            original.slice(0, settled) +
+            [...original.slice(settled)]
+              .map((ch) => (ch === ' ' ? ' ' : GLYPHS[(Math.random() * GLYPHS.length) | 0]))
+              .join('');
+          if (progress < 1) requestAnimationFrame(step);
+          else el.textContent = original;
+        };
+        requestAnimationFrame(step);
+      }
+
+      document.addEventListener('astro:page-load', () => {
+        observer?.disconnect();
+        observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                const el = entry.target as HTMLElement;
+                el.classList.add('is-visible');
+                if (el.matches('[data-scramble]')) scramble(el);
+                el.querySelectorAll<HTMLElement>('[data-scramble]').forEach(scramble);
+                observer!.unobserve(el);
+              }
             }
-          }
-        },
-        { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
-      );
-      document.querySelectorAll('[data-reveal]').forEach((el) => observer.observe(el));
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        document.querySelectorAll('[data-reveal]').forEach((el) => observer!.observe(el));
+      });
     </script>
   </body>
 </html>
