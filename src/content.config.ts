@@ -28,4 +28,15 @@ const work = defineCollection({
   }),
 });
 
-export const collections = { blog, work };
+// Plain-language companions to blog posts, keyed by the same id as the post
+// they explain. A post with a matching entry here gets a Technical / Plain
+// English toggle. Optional label overrides for the toggle chips.
+const plain = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/plain' }),
+  schema: z.object({
+    title: z.string().optional(),
+    summary: z.string().optional(),
+  }),
+});
+
+export const collections = { blog, work, plain };

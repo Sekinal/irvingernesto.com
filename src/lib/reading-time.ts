@@ -1,10 +1,15 @@
 import type { CollectionEntry } from 'astro:content';
 
-// Reading time from the raw markdown body: no runtime cost, no remark plugin,
-// no extra dependency. Strips code fences, frontmatter, and markdown syntax so
-// the count reflects prose, then estimates at 200 wpm (technical reading).
-export function readingTime(entry: CollectionEntry<'blog'>): { minutes: number; words: number; label: string } {
-  const raw = entry.body ?? '';
+export interface ReadStat {
+  minutes: number;
+  words: number;
+  label: string;
+}
+
+// Reading time from a raw markdown body: no runtime cost, no remark plugin, no
+// extra dependency. Strips code fences, frontmatter, and markdown syntax so the
+// count reflects prose, then estimates at 200 wpm (technical reading).
+export function readingTimeFor(raw: string): ReadStat {
   const prose = raw
     .replace(/```[\s\S]*?```/g, ' ') // fenced code
     .replace(/`[^`]*`/g, ' ') // inline code
@@ -13,4 +18,8 @@ export function readingTime(entry: CollectionEntry<'blog'>): { minutes: number; 
   const words = prose.trim().split(/\s+/).filter(Boolean).length;
   const minutes = Math.max(1, Math.round(words / 200));
   return { minutes, words, label: `${minutes} min read` };
+}
+
+export function readingTime(entry: CollectionEntry<'blog'>): ReadStat {
+  return readingTimeFor(entry.body ?? '');
 }

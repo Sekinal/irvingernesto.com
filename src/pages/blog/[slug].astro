@@ -1,8 +1,8 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { getCollection, getEntry, render } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { SITE } from '@/lib/site';
-import { readingTime } from '@/lib/reading-time';
+import { readingTime, readingTimeFor } from '@/lib/reading-time';
 import { blogPostingLd, breadcrumbLd } from '@/lib/structured-data';
 import 'katex/dist/katex.min.css';
 
@@ -15,6 +15,12 @@ const { post } = Astro.props;
 const { Content, headings } = await render(post);
 const toc = headings.filter((h) => h.depth === 2);
 const rt = readingTime(post);
+
+// Optional plain-language companion, keyed by the same id. When present, the
+// page gains a Technical / Plain English toggle.
+const plainEntry = await getEntry('plain', post.id);
+const plain = plainEntry ? await render(plainEntry) : null;
+const plainRt = plainEntry ? readingTimeFor(plainEntry.body ?? '') : null;
 const fmt = (d: Date) =>
   d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 
@@ -47,7 +53,7 @@ const jsonLd = {
         <span class="text-faint">/</span>
         <span>{fmt(post.data.pubDate)}</span>
         <span class="text-faint">/</span>
-        <span>{rt.label}</span>
+        <span id="post-rt" data-technical={rt.label} data-plain={plainRt?.label}>{rt.label}</span>
       </p>
       <h1
         class="font-display text-[clamp(2.25rem,5.5vw,4.5rem)] leading-[1.05] font-medium tracking-tight text-balance"
@@ -69,6 +75,38 @@ const jsonLd = {
           ))
         }
       </div>
+
+      {
+        plain && (
+          <div
+            id="mode-toggle"
+            class="border-line mt-8 inline-flex gap-1 rounded-full border p-1"
+            role="tablist"
+            aria-label="Reading level"
+            data-reveal
+            style="--reveal-delay: 0.2s"
+          >
+            <button
+              type="button"
+              role="tab"
+              data-mode="technical"
+              aria-selected="true"
+              class="mode-btn data-label rounded-full px-4 py-2 transition-colors"
+            >
+              Technical
+            </button>
+            <button
+              type="button"
+              role="tab"
+              data-mode="plain"
+              aria-selected="false"
+              class="mode-btn data-label rounded-full px-4 py-2 transition-colors"
+            >
+              Plain English
+            </button>
+          </div>
+        )
+      }
     </header>
 
     <div
@@ -97,10 +135,24 @@ const jsonLd = {
         }
       </aside>
 
-      <div
-        class="prose prose-lg text-muted prose-headings:font-display prose-headings:font-medium prose-headings:tracking-tight prose-headings:text-fg prose-headings:scroll-mt-28 prose-strong:text-fg prose-code:text-fg prose-a:text-fg prose-a:decoration-(--color-accent) prose-a:underline-offset-4 prose-li:marker:text-accent prose-blockquote:border-accent prose-blockquote:text-fg prose-hr:border-line min-w-0"
-      >
-        <Content />
+      <div class="min-w-0">
+        <div
+          id="body-technical"
+          class="prose prose-lg text-muted prose-headings:font-display prose-headings:font-medium prose-headings:tracking-tight prose-headings:text-fg prose-headings:scroll-mt-28 prose-strong:text-fg prose-code:text-fg prose-a:text-fg prose-a:decoration-(--color-accent) prose-a:underline-offset-4 prose-li:marker:text-accent prose-blockquote:border-accent prose-blockquote:text-fg prose-hr:border-line"
+        >
+          <Content />
+        </div>
+        {
+          plain && (
+            <div
+              id="body-plain"
+              hidden
+              class="prose prose-lg text-muted prose-headings:font-display prose-headings:font-medium prose-headings:tracking-tight prose-headings:text-fg prose-headings:scroll-mt-28 prose-strong:text-fg prose-code:text-fg prose-a:text-fg prose-a:decoration-(--color-accent) prose-a:underline-offset-4 prose-li:marker:text-accent prose-blockquote:border-accent prose-blockquote:text-fg prose-hr:border-line"
+            >
+              <plain.Content />
+            </div>
+          )
+        }
       </div>
       <div class="hidden lg:block"></div>
     </div>
@@ -111,12 +163,14 @@ const jsonLd = {
   </article>
 
   <script>
-    // Scroll-spy for the table of contents. Re-initialized per page view.
+    // Scroll-spy for the table of contents. Only tracks the currently visible
+    // body so the plain-English toggle does not double-count headings.
     let spyObserver: IntersectionObserver | undefined;
-    document.addEventListener('astro:page-load', () => {
-    spyObserver?.disconnect();
-    const links = document.querySelectorAll<HTMLAnchorElement>('.toc-link');
-    if (links.length) {
+
+    function buildSpy() {
+      spyObserver?.disconnect();
+      const links = document.querySelectorAll<HTMLAnchorElement>('.toc-link');
+      if (!links.length) return;
       const map = new Map<string, HTMLAnchorElement>();
       links.forEach((link) => map.set(link.dataset.slug!, link));
       const spy = new IntersectionObserver(
@@ -124,18 +178,82 @@ const jsonLd = {
           for (const entry of entries) {
             if (entry.isIntersecting) {
               links.forEach((l) => l.classList.remove('text-fg', 'border-accent!'));
-              const link = map.get(entry.target.id);
-              link?.classList.add('text-fg', 'border-accent!');
+              map.get(entry.target.id)?.classList.add('text-fg', 'border-accent!');
             }
           }
         },
         { rootMargin: '-20% 0px -70% 0px' }
       );
-      document
-        .querySelectorAll('.prose h2[id]')
-        .forEach((heading) => spy.observe(heading));
+      const active = document.querySelector('#body-technical:not([hidden]), #body-plain:not([hidden])');
+      active?.querySelectorAll('h2[id]').forEach((h) => spy.observe(h));
       spyObserver = spy;
     }
+
+    function initToggle() {
+      const toggle = document.getElementById('mode-toggle');
+      const technical = document.getElementById('body-technical');
+      const plain = document.getElementById('body-plain');
+      const toc = document.querySelector<HTMLElement>('[aria-label="Table of contents"]');
+      const rt = document.getElementById('post-rt');
+      if (!toggle || !technical || !plain) return;
+
+      const apply = (mode: string, focus = false) => {
+        const isPlain = mode === 'plain';
+        plain.hidden = !isPlain;
+        technical.hidden = isPlain;
+        // The plain version is short and self-explanatory, so its table of
+        // contents is hidden; the technical one keeps the sticky TOC.
+        if (toc) toc.style.visibility = isPlain ? 'hidden' : '';
+        toggle.querySelectorAll<HTMLButtonElement>('.mode-btn').forEach((b) =>
+          b.setAttribute('aria-selected', String(b.dataset.mode === mode))
+        );
+        if (rt) {
+          const label = isPlain ? rt.dataset.plain : rt.dataset.technical;
+          if (label) rt.textContent = label;
+        }
+        try {
+          localStorage.setItem('read-mode', mode);
+        } catch (_) {
+          /* storage blocked, no persistence */
+        }
+        buildSpy();
+        if (focus) technical.parentElement?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      };
+
+      if (!toggle.dataset.bound) {
+        toggle.dataset.bound = 'true';
+        toggle.addEventListener('click', (e) => {
+          const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.mode-btn');
+          if (btn?.dataset.mode) apply(btn.dataset.mode, true);
+        });
+      }
+
+      let stored = 'technical';
+      try {
+        stored = localStorage.getItem('read-mode') || 'technical';
+      } catch (_) {
+        /* ignore */
+      }
+      apply(stored);
+    }
+
+    document.addEventListener('astro:page-load', () => {
+      initToggle();
+      buildSpy();
     });
   </script>
+
+  <style>
+    .mode-btn {
+      color: var(--color-muted);
+      cursor: pointer;
+    }
+    .mode-btn[aria-selected='true'] {
+      background: var(--color-accent);
+      color: #fff;
+    }
+    .mode-btn[aria-selected='false']:hover {
+      color: var(--color-fg);
+    }
+  </style>
 </BaseLayout>
