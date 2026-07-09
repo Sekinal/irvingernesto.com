@@ -113,6 +113,6 @@ const projects = (await getCollection('work')).sort((a, b) => a.data.order - b.d
     if (!canvas || canvas.dataset.mounted) return;
     canvas.dataset.mounted = '1';
     const section = document.getElementById('work');
-    hostSim(canvas, createFilings, { maxDpr: 1.5, interactWith: section });
+    hostSim(canvas, createFilings, { maxDpr: 1.5, interactWith: section, lazy: true });
   });
 </script>

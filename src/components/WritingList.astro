@@ -78,6 +78,6 @@ const fmt = (d: Date) =>
     if (!canvas || canvas.dataset.mounted) return;
     canvas.dataset.mounted = '1';
     const section = canvas.closest('section') as HTMLElement | null;
-    hostSim(canvas, createPaper, { maxDpr: 1.5, interactWith: section });
+    hostSim(canvas, createPaper, { maxDpr: 1.5, interactWith: section, lazy: true });
   });
 </script>

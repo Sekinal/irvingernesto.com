@@ -45,6 +45,10 @@ export interface SimHooks {
 export interface HostOptions {
   maxDpr?: number;
   interactWith?: HTMLElement | null;
+  /** Build the sim on first intersection instead of at mount. Below-the-fold
+   * sims should pass true so section mounts never pile into one long
+   * main-thread task at page load. */
+  lazy?: boolean;
 }
 
 export function hostSim(
@@ -54,8 +58,13 @@ export function hostSim(
 ): boolean {
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
   if (reduceMotion.matches) return false;
-  const hooks = make(canvas);
-  if (!hooks) return false;
+
+  let hooks: SimHooks | null = null;
+  const create = () => {
+    hooks = make(canvas);
+    return hooks !== null;
+  };
+  if (!opts.lazy && !create()) return false;
 
   const dpr = Math.min(devicePixelRatio || 1, opts.maxDpr ?? 1.5);
   const ctrl = new AbortController();
@@ -87,7 +96,7 @@ export function hostSim(
     cssH = h;
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
-    hooks.resize(w, h, dpr);
+    hooks?.resize(w, h, dpr);
   }
 
   function frame(now: number) {
@@ -100,12 +109,12 @@ export function hostSim(
     if (!running) return;
     const dt = Math.min(Math.max((now - last) / 1000, 0), 1 / 30);
     last = now;
-    hooks.step(dt, now / 1000);
+    hooks!.step(dt, now / 1000);
     raf = requestAnimationFrame(frame);
   }
 
   function shouldRun() {
-    return visible && !document.hidden && !destroyed;
+    return visible && !document.hidden && !destroyed && hooks !== null;
   }
 
   function sync() {
@@ -137,7 +146,7 @@ export function hostSim(
     ro.disconnect();
     io.disconnect();
     ctrl.abort();
-    hooks.destroy?.();
+    hooks?.destroy?.();
   }
 
   const ro = new ResizeObserver(() => resize());
@@ -146,6 +155,15 @@ export function hostSim(
   const io = new IntersectionObserver(
     (entries) => {
       for (const e of entries) visible = e.isIntersecting;
+      if (visible && !hooks && !destroyed) {
+        // Deferred build for lazy sims, sized from the already-measured canvas.
+        if (create()) {
+          if (cssW > 0) hooks!.resize(cssW, cssH, dpr);
+        } else {
+          destroy();
+          return;
+        }
+      }
       sync();
     },
     { rootMargin: '120px' },
@@ -163,7 +181,7 @@ export function hostSim(
       px = e.clientX;
       py = e.clientY;
       havePointer = true;
-      hooks.pointerMove?.(x, y, dx, dy);
+      hooks?.pointerMove?.(x, y, dx, dy);
     },
     { passive: true, signal },
   );
@@ -173,14 +191,14 @@ export function hostSim(
     'pointerdown',
     (e) => {
       const [x, y] = local(e.clientX, e.clientY);
-      hooks.pointerDown?.(x, y);
+      hooks?.pointerDown?.(x, y);
     },
     { passive: true, signal },
   );
 
   const onUp = (e: PointerEvent) => {
     const [x, y] = local(e.clientX, e.clientY);
-    hooks.pointerUp?.(x, y);
+    hooks?.pointerUp?.(x, y);
   };
   addEventListener('pointerup', onUp, { passive: true, signal });
   addEventListener('pointercancel', onUp, { passive: true, signal });

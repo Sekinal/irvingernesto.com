@@ -229,6 +229,50 @@ html.theme-transition::view-transition-new(root) {
   mask-position: 0 0;
 }
 
+/* CSS-only reveals for above-the-fold hero content: they paint as soon as
+   styles load, so the largest contentful paint never waits for script boot.
+   The scramble observer also watches these to fire label decodes. */
+.auto-reveal {
+  animation: auto-reveal-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--reveal-delay, 0s);
+}
+.auto-reveal-mask {
+  mask-image: linear-gradient(to bottom, #000 35%, transparent 65%);
+  mask-size: 100% 320%;
+  animation: auto-reveal-wipe 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes auto-reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes auto-reveal-wipe {
+  from {
+    transform: translateY(0.15em);
+    mask-position: 0 100%;
+  }
+  to {
+    transform: none;
+    mask-position: 0 0;
+  }
+}
+/* Phones get snappier hero reveals: same choreography, roughly half the wait,
+   which keeps the largest contentful paint inside the green band. */
+@media (max-width: 767px) {
+  .auto-reveal {
+    animation-duration: 0.55s;
+    animation-delay: calc(var(--reveal-delay, 0s) * 0.5);
+  }
+  .auto-reveal-mask {
+    animation-duration: 0.7s;
+  }
+}
+
 /* ---------------------------------- */
 /* Hero kinetic letters                */
 /* ---------------------------------- */
@@ -289,11 +333,14 @@ html.theme-transition::view-transition-new(root) {
     scroll-behavior: auto;
   }
   [data-reveal],
-  [data-reveal='mask'] {
+  [data-reveal='mask'],
+  .auto-reveal,
+  .auto-reveal-mask {
     opacity: 1;
     transform: none;
     mask-image: none;
     transition: none;
+    animation: none;
   }
   .marquee-track {
     animation-play-state: paused;

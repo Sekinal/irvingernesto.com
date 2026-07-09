@@ -138,6 +138,6 @@ const repos = [
     if (!canvas || canvas.dataset.mounted) return;
     canvas.dataset.mounted = '1';
     const section = canvas.closest('section');
-    hostSim(canvas, createBallpit, { maxDpr: 1.5, interactWith: section });
+    hostSim(canvas, createBallpit, { maxDpr: 1.5, interactWith: section, lazy: true });
   });
 </script>

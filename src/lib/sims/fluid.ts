@@ -262,6 +262,19 @@ export function createFluid(
   canvas: HTMLCanvasElement,
   opts: FluidOptions = {},
 ): SimHooks | null {
+  // Capability probe on a throwaway canvas: once a canvas has held a webgl2
+  // context it can never yield a 2d one, so the real canvas is only claimed
+  // after the probe passes. Software rasterizers (SwiftShader, llvmpipe) run
+  // the solver on the CPU and jank the whole page, so they get the cheap
+  // constellation fallback instead.
+  const probe = document.createElement('canvas').getContext('webgl2');
+  if (!probe) return null;
+  const probeOk = !!probe.getExtension('EXT_color_buffer_float');
+  const dbg = probe.getExtension('WEBGL_debug_renderer_info');
+  const renderer = dbg ? String(probe.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : '';
+  probe.getExtension('WEBGL_lose_context')?.loseContext();
+  if (!probeOk || /swiftshader|software|llvmpipe/i.test(renderer)) return null;
+
   const gl = canvas.getContext('webgl2', {
     alpha: true,
     depth: false,
@@ -281,28 +294,28 @@ export function createFluid(
   // missing, so we still render rather than returning null.
   const LIN = linearFloat ? gl.LINEAR : gl.NEAREST;
 
-  function compile(type: number, src: string): WebGLShader | null {
+  // Pipelined program setup: compile everything, link everything, check status
+  // once at the end. Every status query is a sync point that stalls the main
+  // thread, so batching them (plus KHR_parallel_shader_compile where present)
+  // lets the driver compile in parallel instead of blocking per shader.
+  gl.getExtension('KHR_parallel_shader_compile');
+
+  function compile(type: number, src: string): WebGLShader {
     const sh = gl!.createShader(type)!;
     gl!.shaderSource(sh, src);
     gl!.compileShader(sh);
-    if (!gl!.getShaderParameter(sh, gl!.COMPILE_STATUS)) {
-      gl!.deleteShader(sh);
-      return null;
-    }
     return sh;
   }
 
-  function program(fragSrc: string): WebGLProgram | null {
-    const vs = compile(gl!.VERTEX_SHADER, BASE_VERT);
+  const vert = compile(gl.VERTEX_SHADER, BASE_VERT);
+
+  function program(fragSrc: string): WebGLProgram {
     const fs = compile(gl!.FRAGMENT_SHADER, fragSrc);
-    if (!vs || !fs) return null;
     const prog = gl!.createProgram()!;
-    gl!.attachShader(prog, vs);
+    gl!.attachShader(prog, vert);
     gl!.attachShader(prog, fs);
     gl!.linkProgram(prog);
-    gl!.deleteShader(vs);
     gl!.deleteShader(fs);
-    if (!gl!.getProgramParameter(prog, gl!.LINK_STATUS)) return null;
     return prog;
   }
 
@@ -315,12 +328,11 @@ export function createFluid(
   const pSplat = program(SPLAT_FRAG);
   const pDisplay = program(DISPLAY_FRAG);
   const pDecay = program(DECAY_FRAG);
-  if (
-    !pAdvect || !pDivergence || !pCurl || !pVorticity || !pPressure ||
-    !pGradient || !pSplat || !pDisplay || !pDecay
-  ) {
-    return null;
-  }
+  gl.deleteShader(vert);
+  const programs = [
+    pAdvect, pDivergence, pCurl, pVorticity, pPressure, pGradient, pSplat, pDisplay, pDecay,
+  ];
+  if (programs.some((p) => !gl!.getProgramParameter(p, gl!.LINK_STATUS))) return null;
 
   // Cache uniform locations per program.
   type Locs = Record<string, WebGLUniformLocation | null>;

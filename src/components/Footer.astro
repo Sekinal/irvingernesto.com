@@ -109,6 +109,6 @@ const year = new Date().getFullYear();
     if (!canvas || canvas.dataset.mounted) return;
     canvas.dataset.mounted = '1';
     const footer = document.getElementById('contact') as HTMLElement | null;
-    hostSim(canvas, createPendulum, { maxDpr: 1.5, interactWith: footer });
+    hostSim(canvas, createPendulum, { maxDpr: 1.5, interactWith: footer, lazy: true });
   });
 </script>

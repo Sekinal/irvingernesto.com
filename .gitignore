@@ -5,3 +5,4 @@ dist/
 *.log
 site.zip
 .playwright-cli/
+.env.deploy

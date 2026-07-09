@@ -128,7 +128,7 @@ import { SITE, STATS, EXPERIENCE } from '@/lib/site';
     if (!canvas || canvas.dataset.mounted) return;
     canvas.dataset.mounted = '1';
     const section = document.getElementById('about');
-    hostSim(canvas, createGalaxy, { maxDpr: 1, interactWith: section });
+    hostSim(canvas, createGalaxy, { maxDpr: 1, interactWith: section, lazy: true });
   });
 </script>
 
