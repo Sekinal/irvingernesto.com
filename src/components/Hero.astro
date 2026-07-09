@@ -2,13 +2,19 @@
 import { SITE } from '@/lib/site';
 
 // Spec-sheet strip: the engineering-datasheet read of the whole site in four
-// mono columns. Static HTML, zero JS.
+// mono columns. Static HTML, zero JS. Spaces inside each part become
+// non-breaking so narrow screens only ever wrap after a separator dot, never
+// mid-value and never with a dot starting a line.
+const spec = (label: string, parts: string[]) => ({
+  label,
+  value: parts.map((p) => p.replace(/ /g, ' ')).join(' · '),
+});
 const SPECS = [
-  { label: 'Stack', value: 'PyTorch · Dagster · Rust · Postgres' },
-  { label: 'Scale', value: '80K listings/day · 600+ cities' },
-  { label: 'In the open', value: '62 models · 68 datasets' },
-  { label: 'Now', value: 'CTO @ RoomIQ · Building SteelEye' },
-] as const;
+  spec('Stack', ['PyTorch', 'Dagster', 'Rust', 'Postgres']),
+  spec('Scale', ['80K listings/day', '600+ cities']),
+  spec('In the open', ['62 models', '68 datasets']),
+  spec('Now', ['CTO @ RoomIQ', 'Building SteelEye']),
+];
 ---
 
 <section
@@ -31,13 +37,13 @@ const SPECS = [
       <span data-scramble>{SITE.name}</span>
       <span class="text-faint">/</span>
       <span data-scramble>CTO @ RoomIQ</span>
-      <span class="text-faint">/</span>
-      <span data-scramble>{SITE.location}</span>
+      <span class="text-faint hidden sm:inline">/</span>
+      <span class="hidden sm:inline" data-scramble>{SITE.location}</span>
     </p>
 
     <h1
       id="hero-title"
-      class="auto-reveal-mask display-huge text-fg text-[clamp(3rem,10.5vw,10.5rem)]"
+      class="auto-reveal-mask display-huge text-fg text-[clamp(3.4rem,14vw,5rem)] md:text-[clamp(3rem,10.5vw,10.5rem)]"
     >
       AI engineer<span class="text-accent">,</span><br />
       physicist<span class="text-accent">.</span>

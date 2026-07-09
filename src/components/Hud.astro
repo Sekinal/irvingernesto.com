@@ -5,6 +5,12 @@
 // collides with the footer meta line.
 ---
 
+<span
+  id="hud-top"
+  aria-hidden="true"
+  class="bg-accent pointer-events-none fixed inset-x-0 top-0 z-60 block h-0.5 origin-left lg:hidden"
+  style="transform: scaleX(0)"></span>
+
 <div
   id="hud"
   aria-hidden="true"
@@ -29,6 +35,7 @@
     const hud = document.getElementById('hud');
     const bar = document.getElementById('hud-bar');
     const sec = document.getElementById('hud-sec');
+    const top = document.getElementById('hud-top');
     if (!hud || !bar || !sec) return;
     ctrl = new AbortController();
     const { signal } = ctrl;
@@ -39,6 +46,7 @@
       const max = document.documentElement.scrollHeight - innerHeight;
       const p = max > 0 ? Math.min(1, scrollY / max) : 0;
       bar.style.transform = `scaleX(${p})`;
+      if (top) top.style.transform = `scaleX(${p})`;
       hud.style.opacity = p > 0.97 ? '0' : '1';
     };
     addEventListener(

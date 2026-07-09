@@ -1,5 +1,6 @@
 ---
 import ThemeToggle from '@/components/ThemeToggle.astro';
+import { SITE, SOCIALS } from '@/lib/site';
 
 const links = [
   { label: 'Work', href: '/#work' },
@@ -11,7 +12,7 @@ const links = [
 
 <header class="fixed inset-x-0 top-0 z-50">
   <nav
-    class="border-line bg-bg/70 mx-auto flex max-w-[1600px] items-center justify-between border-b px-5 py-3.5 backdrop-blur-md md:px-10"
+    class="border-line bg-bg/70 relative z-10 mx-auto flex max-w-[1600px] items-center justify-between border-b px-5 py-3.5 backdrop-blur-md md:px-10"
     aria-label="Main"
   >
     <a href="/" class="font-display text-fg text-lg font-semibold tracking-tight">
@@ -50,22 +51,51 @@ const links = [
     </div>
   </nav>
 
-  <div
-    id="nav-menu"
-    class="border-line bg-bg/95 hidden border-b px-5 py-6 backdrop-blur-md md:hidden"
-  >
-    <div class="flex flex-col gap-5">
-      {
-        links.map((link, i) => (
-          <a
-            href={link.href}
-            class="font-display text-fg text-3xl font-medium tracking-tight"
-            style={`--reveal-delay: ${i * 0.05}s`}
-          >
-            {link.label}
-          </a>
-        ))
-      }
+  <div id="nav-menu" class="bg-bg fixed inset-0 hidden md:hidden" aria-hidden="true">
+    <div class="flex h-full flex-col justify-between overflow-y-auto px-5 pt-24 pb-9">
+      <nav class="flex flex-col" aria-label="Mobile">
+        {
+          links.map((link, i) => (
+            <a
+              href={link.href}
+              class="menu-link border-line flex items-baseline gap-5 border-b py-5"
+              style={`--i: ${i}`}
+            >
+              <span class="data-label text-faint">0{i + 1}</span>
+              <span class="font-display text-fg text-5xl font-medium tracking-tight">
+                {link.label}
+              </span>
+              <span class="text-accent ml-auto text-2xl" aria-hidden="true">
+                ↗
+              </span>
+            </a>
+          ))
+        }
+      </nav>
+
+      <div class="menu-foot flex flex-col gap-5" style="--i: 4">
+        <span class="data-label flex items-center gap-2">
+          <span class="relative flex size-2">
+            <span class="bg-accent absolute inline-flex size-full animate-ping rounded-full opacity-60"
+            ></span>
+            <span class="bg-accent relative inline-flex size-2 rounded-full"></span>
+          </span>
+          Open to select projects
+        </span>
+        <a href={`mailto:${SITE.email}`} class="font-display text-fg text-xl font-medium tracking-tight">
+          {SITE.email}
+        </a>
+        <div class="data-label text-faint flex flex-wrap gap-x-6 gap-y-2">
+          {
+            SOCIALS.slice(0, 4).map((social) => (
+              <a href={social.href} target="_blank" rel="noopener" class="hover:text-fg transition-colors">
+                {social.label}
+              </a>
+            ))
+          }
+        </div>
+        <span class="data-label text-faint">{SITE.coords}</span>
+      </div>
     </div>
   </div>
 </header>
@@ -98,24 +128,69 @@ const links = [
     top: 0;
     transform: rotate(-45deg);
   }
+
+  /* Full-screen mobile menu: items stagger in each time the panel opens
+     (display none to block restarts the animations). */
+  .menu-link,
+  .menu-foot {
+    opacity: 0;
+  }
+  #nav-menu.is-open .menu-link,
+  #nav-menu.is-open .menu-foot {
+    animation: menu-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--i) * 65ms + 50ms);
+  }
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  :global(html.menu-open) {
+    overflow: hidden;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .menu-link,
+    .menu-foot {
+      opacity: 1;
+      animation: none !important;
+    }
+  }
 </style>
 
 <script>
+  function setMenu(open: boolean) {
+    const toggle = document.getElementById('nav-toggle');
+    const menu = document.getElementById('nav-menu');
+    if (!toggle || !menu) return;
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    menu.classList.toggle('hidden', !open);
+    menu.classList.toggle('is-open', open);
+    menu.setAttribute('aria-hidden', String(!open));
+    document.documentElement.classList.toggle('menu-open', open);
+  }
+
   document.addEventListener('astro:page-load', () => {
     const toggle = document.getElementById('nav-toggle');
     const menu = document.getElementById('nav-menu');
     if (!toggle || !menu || toggle.dataset.bound) return;
     toggle.dataset.bound = 'true';
-    toggle.addEventListener('click', () => {
-      const open = toggle.getAttribute('aria-expanded') === 'true';
-      toggle.setAttribute('aria-expanded', String(!open));
-      menu.classList.toggle('hidden', open);
-    });
+    toggle.addEventListener('click', () =>
+      setMenu(toggle.getAttribute('aria-expanded') !== 'true'),
+    );
     menu.addEventListener('click', (e) => {
-      if ((e.target as HTMLElement).tagName === 'A') {
-        toggle.setAttribute('aria-expanded', 'false');
-        menu.classList.add('hidden');
-      }
+      if ((e.target as HTMLElement).closest('a')) setMenu(false);
     });
   });
+
+  // The scroll lock lives on <html>, which survives view transitions: always
+  // release it before a swap.
+  document.addEventListener('astro:before-swap', () =>
+    document.documentElement.classList.remove('menu-open'),
+  );
 </script>
