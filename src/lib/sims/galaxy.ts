@@ -82,9 +82,19 @@ export function createGalaxy(canvas: HTMLCanvasElement): SimHooks {
     return min + Math.random() * (max - min);
   }
 
+  // The dense core must not hide under the opaque portrait or the stat cards:
+  // anchor it in the left text column on wide layouts, and below the stacked
+  // photo on narrow ones.
+  function anchorX(): number {
+    return w < 768 ? w * 0.5 : w * 0.33;
+  }
+  function anchorY(): number {
+    return w < 768 ? h * 0.7 : h * 0.42;
+  }
+
   function seed() {
-    cx = w * 0.5;
-    cy = h * 0.5;
+    cx = anchorX();
+    cy = anchorY();
     diskR = 0.35 * Math.min(w, h);
 
     // Total mass normalized to 1. Core holds CORE_FRACTION, disk bodies share
@@ -423,8 +433,8 @@ export function createGalaxy(canvas: HTMLCanvasElement): SimHooks {
         computeAccelAll();
       } else {
         // Recenter on resize without a full reseed so the sim keeps its state.
-        const ncx = w * 0.5;
-        const ncy = h * 0.5;
+        const ncx = anchorX();
+        const ncy = anchorY();
         const shiftX = ncx - cx;
         const shiftY = ncy - cy;
         for (let i = 0; i < cap; i++) {
