@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { SITE } from '@/lib/site';
+import { creativeWorkLd, breadcrumbLd } from '@/lib/structured-data';
 
 export async function getStaticPaths() {
   const projects = await getCollection('work');
@@ -14,19 +15,23 @@ const projects = (await getCollection('work')).sort((a, b) => a.data.order - b.d
 const index = projects.findIndex((p) => p.id === project.id);
 const next = projects[(index + 1) % projects.length];
 
+const url = new URL(`/work/${project.id}`, SITE.url).href;
 const jsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'CreativeWork',
-  name: project.data.title,
-  description: project.data.summary,
-  author: { '@type': 'Person', name: SITE.name, url: SITE.url },
-  ...(project.data.link ? { url: project.data.link } : {}),
+  '@graph': [
+    creativeWorkLd(project, url),
+    breadcrumbLd([
+      { name: 'Work', url: `${SITE.url}/#work` },
+      { name: project.data.title, url },
+    ]),
+  ],
 };
 ---
 
 <BaseLayout
   title={`${project.data.title} · ${SITE.shortName}`}
   description={project.data.summary}
+  ogImage={`/og/work/${project.id}.png`}
   jsonLd={jsonLd}
 >
   <article class="mx-auto max-w-[1600px] px-5 pt-32 md:px-10 md:pt-44">

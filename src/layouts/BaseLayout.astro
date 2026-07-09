@@ -8,6 +8,8 @@ import CursorFX from '@/components/CursorFX.astro';
 import Hud from '@/components/Hud.astro';
 import { SITE } from '@/lib/site';
 
+import { personLd, websiteLd } from '@/lib/structured-data';
+
 interface Props {
   title?: string;
   description?: string;
@@ -15,6 +17,7 @@ interface Props {
   publishedTime?: string;
   tags?: string[];
   jsonLd?: Record<string, unknown>;
+  ogImage?: string;
 }
 
 const {
@@ -24,32 +27,23 @@ const {
   publishedTime,
   tags,
   jsonLd,
+  ogImage,
 } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const ogImageUrl = new URL(ogImage ?? '/og.png', SITE.url).href;
 
-const defaultJsonLd = {
+// The site-wide graph: Person + WebSite (with a SearchAction) on every page,
+// so search engines resolve one canonical identity and can offer a sitelinks
+// search box. Page-specific nodes (BlogPosting, CreativeWork, breadcrumbs) are
+// passed in via jsonLd and merged into the same @graph.
+const pageNodes = jsonLd
+  ? Array.isArray((jsonLd as { '@graph'?: unknown })['@graph'])
+    ? ((jsonLd as { '@graph': unknown[] })['@graph'])
+    : [jsonLd]
+  : [personLd()];
+const graph = {
   '@context': 'https://schema.org',
-  '@type': 'Person',
-  name: SITE.name,
-  alternateName: ['Irving Ernesto', 'ieqr'],
-  url: SITE.url,
-  email: SITE.email,
-  jobTitle: 'AI Engineer & Physicist',
-  worksFor: { '@type': 'Organization', name: 'RoomIQ', url: 'https://roomiq.io' },
-  alumniOf: { '@type': 'CollegeOrUniversity', name: 'Universidad Veracruzana' },
-  knowsAbout: [
-    'Machine Learning',
-    'LLM Fine-tuning',
-    'Data Engineering',
-    'Reverse Engineering',
-    'Physics',
-  ],
-  sameAs: [
-    'https://github.com/Sekinal',
-    'https://huggingface.co/Thermostatic',
-    'https://x.com/ieqr_',
-    'https://www.linkedin.com/in/ieqr',
-  ],
+  '@graph': [websiteLd(), ...pageNodes],
 };
 ---
 
@@ -63,17 +57,20 @@ const defaultJsonLd = {
       description={description}
       canonical={canonical}
       openGraph={{
-        basic: { title, type: ogType, url: canonical, image: `${SITE.url}/og.png` },
+        basic: { title, type: ogType, url: canonical, image: ogImageUrl },
         optional: { description, siteName: SITE.name, locale: 'en_US' },
+        image: { alt: title, type: 'image/png', width: 1200, height: 630 },
         ...(ogType === 'article' && publishedTime
           ? { article: { publishedTime, authors: [SITE.name], tags } }
           : {}),
       }}
       twitter={{
         card: 'summary_large_image',
+        site: '@ieqr_',
+        creator: '@ieqr_',
         title,
         description,
-        image: `${SITE.url}/og.png`,
+        image: ogImageUrl,
       }}
       extend={{
         link: [
@@ -104,7 +101,7 @@ const defaultJsonLd = {
     />
     <script
       type="application/ld+json"
-      set:html={JSON.stringify(jsonLd ?? defaultJsonLd)}
+      set:html={JSON.stringify(graph)}
       is:inline
     />
     <script is:inline>

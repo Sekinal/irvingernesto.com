@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { SITE } from '@/lib/site';
+import { readingTime } from '@/lib/reading-time';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
@@ -32,7 +33,10 @@ const fmt = (d: Date) =>
               href={`/blog/${post.id}`}
               class="group hover:bg-card grid gap-x-10 gap-y-2 px-2 py-8 transition-colors duration-300 md:grid-cols-[10rem_1fr_auto] md:items-baseline md:px-4 md:py-10"
             >
-              <span class="data-label text-faint">{fmt(post.data.pubDate)}</span>
+              <span class="data-label text-faint">
+                {fmt(post.data.pubDate)}
+                <span class="mt-1 block">{readingTime(post).label}</span>
+              </span>
               <span class="min-w-0">
                 <span class="font-display group-hover:text-accent block text-[clamp(1.5rem,3.5vw,2.75rem)] leading-tight font-medium tracking-tight transition-colors duration-300">
                   {post.data.title}
