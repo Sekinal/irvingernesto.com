@@ -9,7 +9,8 @@ const fmt = (d: Date) =>
   d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 ---
 
-<section class="mx-auto max-w-[1600px] px-5 pt-24 md:px-10 md:pt-36">
+<section class="relative isolate mx-auto max-w-[1600px] px-5 pt-24 md:px-10 md:pt-36">
+  <canvas id="sim-paper" class="pointer-events-none absolute inset-0 -z-10 size-full" aria-hidden="true"></canvas>
   <div class="mb-12 flex items-end justify-between">
     <div>
       <p class="data-label mb-4" data-reveal data-scramble>04 / Writing</p>
@@ -63,3 +64,16 @@ const fmt = (d: Date) =>
 
   <a href="/blog" class="link-under data-label text-fg mt-8 inline-block md:hidden">All posts →</a>
 </section>
+
+<script>
+  import { hostSim } from '@/lib/sims/host';
+  import { createPaper } from '@/lib/sims/paper';
+
+  document.addEventListener('astro:page-load', () => {
+    const canvas = document.getElementById('sim-paper') as HTMLCanvasElement | null;
+    if (!canvas || canvas.dataset.mounted) return;
+    canvas.dataset.mounted = '1';
+    const section = canvas.closest('section') as HTMLElement | null;
+    hostSim(canvas, createPaper, { maxDpr: 1.5, interactWith: section });
+  });
+</script>

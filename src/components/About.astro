@@ -4,7 +4,15 @@ import portrait from '@/assets/irving.jpg';
 import { SITE, STATS, EXPERIENCE } from '@/lib/site';
 ---
 
-<section id="about" class="mx-auto max-w-[1600px] scroll-mt-20 px-5 pt-24 md:px-10 md:pt-36">
+<section
+  id="about"
+  class="relative isolate mx-auto max-w-[1600px] scroll-mt-20 px-5 pt-24 md:px-10 md:pt-36"
+>
+  <canvas
+    id="sim-galaxy"
+    class="pointer-events-none absolute inset-0 -z-10 size-full"
+    aria-hidden="true"></canvas>
+
   <p class="data-label mb-4" data-reveal data-scramble>02 / About</p>
 
   <div class="grid gap-12 lg:grid-cols-[1.5fr_1fr] lg:gap-20">
@@ -105,7 +113,22 @@ import { SITE, STATS, EXPERIENCE } from '@/lib/site';
       }
     </ul>
   </div>
+
+  <p class="data-label text-faint mt-10 text-right">n-body · barnes-hut · θ = 0.7 · n = 4000</p>
 </section>
+
+<script>
+  import { hostSim } from '@/lib/sims/host';
+  import { createGalaxy } from '@/lib/sims/galaxy';
+
+  document.addEventListener('astro:page-load', () => {
+    const canvas = document.getElementById('sim-galaxy') as HTMLCanvasElement | null;
+    if (!canvas || canvas.dataset.mounted) return;
+    canvas.dataset.mounted = '1';
+    const section = document.getElementById('about');
+    hostSim(canvas, createGalaxy, { maxDpr: 1, interactWith: section });
+  });
+</script>
 
 <style>
   .portrait-img {

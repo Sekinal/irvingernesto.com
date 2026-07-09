@@ -39,7 +39,11 @@ const repos = [
 ];
 ---
 
-<section class="mx-auto max-w-[1600px] px-5 pt-24 md:px-10 md:pt-36">
+<section class="relative isolate mx-auto max-w-[1600px] px-5 pt-24 md:px-10 md:pt-36">
+  <canvas
+    id="sim-ballpit"
+    class="pointer-events-none absolute inset-0 -z-10 size-full"
+    aria-hidden="true"></canvas>
   <div class="mb-12 flex items-end justify-between">
     <div>
       <p class="data-label mb-4" data-reveal data-scramble>03 / Open source</p>
@@ -120,3 +124,16 @@ const repos = [
     >
   </div>
 </section>
+
+<script>
+  import { hostSim } from '@/lib/sims/host';
+  import { createBallpit } from '@/lib/sims/ballpit';
+
+  document.addEventListener('astro:page-load', () => {
+    const canvas = document.getElementById('sim-ballpit') as HTMLCanvasElement | null;
+    if (!canvas || canvas.dataset.mounted) return;
+    canvas.dataset.mounted = '1';
+    const section = canvas.closest('section');
+    hostSim(canvas, createBallpit, { maxDpr: 1.5, interactWith: section });
+  });
+</script>

@@ -4,7 +4,11 @@ import ContactForm from '@/components/ContactForm.astro';
 const year = new Date().getFullYear();
 ---
 
-<footer id="contact" class="border-line relative overflow-hidden border-t">
+<footer id="contact" class="border-line relative isolate overflow-hidden border-t">
+  <canvas
+    id="sim-pendulum"
+    class="pointer-events-none absolute inset-0 -z-10 size-full"
+    aria-hidden="true"></canvas>
   <div class="mx-auto max-w-[1600px] px-5 pt-24 pb-10 md:px-10 md:pt-36">
     <p class="data-label mb-8" data-reveal data-scramble>05 / Contact</p>
     <h2
@@ -63,6 +67,7 @@ const year = new Date().getFullYear();
     >
       <span>© {year} {SITE.name}</span>
       <span>{SITE.coords}</span>
+      <span class="hidden md:inline">chaos · 16 double pendulums · δθ₀ = 10⁻³ rad</span>
       <span>Local time <span id="local-time">--:--</span> GMT-6</span>
     </div>
   </div>
@@ -88,4 +93,17 @@ const year = new Date().getFullYear();
   };
   document.addEventListener('astro:page-load', tick);
   setInterval(tick, 30_000);
+</script>
+
+<script>
+  import { hostSim } from '@/lib/sims/host';
+  import { createPendulum } from '@/lib/sims/pendulum';
+
+  document.addEventListener('astro:page-load', () => {
+    const canvas = document.getElementById('sim-pendulum') as HTMLCanvasElement | null;
+    if (!canvas || canvas.dataset.mounted) return;
+    canvas.dataset.mounted = '1';
+    const footer = document.getElementById('contact') as HTMLElement | null;
+    hostSim(canvas, createPendulum, { maxDpr: 1.5, interactWith: footer });
+  });
 </script>

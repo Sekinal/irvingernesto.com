@@ -4,7 +4,14 @@ import { getCollection } from 'astro:content';
 const projects = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
 ---
 
-<section id="work" class="mx-auto max-w-[1600px] scroll-mt-20 px-5 pt-24 md:px-10 md:pt-36">
+<section
+  id="work"
+  class="relative isolate mx-auto max-w-[1600px] scroll-mt-20 px-5 pt-24 md:px-10 md:pt-36"
+>
+  <canvas
+    id="sim-filings"
+    class="pointer-events-none absolute inset-0 -z-10 size-full"
+    aria-hidden="true"></canvas>
   <div class="mb-14 flex items-end justify-between gap-6">
     <div>
       <p class="data-label mb-4" data-reveal data-scramble>01 / Selected work</p>
@@ -92,5 +99,18 @@ const projects = (await getCollection('work')).sort((a, b) => a.data.order - b.d
       row.addEventListener('pointerleave', () => pill.classList.remove('is-on'), { signal });
       row.addEventListener('click', () => pill.classList.remove('is-on'), { signal });
     });
+  });
+</script>
+
+<script>
+  import { hostSim } from '@/lib/sims/host';
+  import { createFilings } from '@/lib/sims/filings';
+
+  document.addEventListener('astro:page-load', () => {
+    const canvas = document.getElementById('sim-filings') as HTMLCanvasElement | null;
+    if (!canvas || canvas.dataset.mounted) return;
+    canvas.dataset.mounted = '1';
+    const section = document.getElementById('work');
+    hostSim(canvas, createFilings, { maxDpr: 1.5, interactWith: section });
   });
 </script>
