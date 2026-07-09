@@ -55,7 +55,7 @@ const year = new Date().getFullYear();
           <a
             href={social.href}
             target={social.href.startsWith('http') ? '_blank' : undefined}
-            rel="noopener"
+            rel={social.href.startsWith('http') ? 'me noopener' : 'noopener'}
             class:list={['group', social.label === 'Email' && 'col-span-2 md:col-span-1']}
           >
             <span class="data-label block">{social.label}</span>
