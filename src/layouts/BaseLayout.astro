@@ -5,6 +5,7 @@ import { ClientRouter } from 'astro:transitions';
 import Nav from '@/components/Nav.astro';
 import Footer from '@/components/Footer.astro';
 import CursorFX from '@/components/CursorFX.astro';
+import Hud from '@/components/Hud.astro';
 import { SITE } from '@/lib/site';
 
 interface Props {
@@ -120,6 +121,22 @@ const defaultJsonLd = {
         document.addEventListener('astro:after-swap', apply);
       })();
     </script>
+    <script is:inline>
+      // First-visit intro gate: decided before paint so repeat views never
+      // flash the plate. The overlay only renders under html[data-intro].
+      (() => {
+        try {
+          if (
+            !sessionStorage.getItem('intro-seen') &&
+            !matchMedia('(prefers-reduced-motion: reduce)').matches
+          ) {
+            document.documentElement.dataset.intro = '1';
+          }
+        } catch (_) {
+          /* storage blocked: skip the intro */
+        }
+      })();
+    </script>
   </head>
   <body class="min-h-svh antialiased">
     <a
@@ -128,12 +145,31 @@ const defaultJsonLd = {
     >
       Skip to content
     </a>
+
+    <div id="intro" aria-hidden="true">
+      <div class="data-label flex flex-col gap-2.5">
+        <p data-intro-line style="opacity: 0">{SITE.name}</p>
+        <p data-intro-line style="opacity: 0">AI engineer · Physicist</p>
+        <p data-intro-line style="opacity: 0">{SITE.coords}</p>
+      </div>
+      <div class="flex items-end justify-between gap-6">
+        <span class="data-label text-faint">irvingernesto.com</span>
+        <span
+          id="intro-count"
+          class="font-display text-fg text-[clamp(4.5rem,12vw,9rem)] leading-none font-semibold tracking-tight tabular-nums"
+        >
+          000
+        </span>
+      </div>
+    </div>
+
     <Nav />
     <main id="main">
       <slot />
     </main>
     <Footer />
     <CursorFX />
+    <Hud />
 
     <script>
       // Scroll reveals + label scramble. Re-initialized on every page view
@@ -178,8 +214,119 @@ const defaultJsonLd = {
           },
           { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
         );
-        document.querySelectorAll('[data-reveal]').forEach((el) => observer!.observe(el));
+        const start = () =>
+          document.querySelectorAll('[data-reveal]').forEach((el) => observer!.observe(el));
+        // Under the first-visit intro plate, hold the reveals until the wipe
+        // starts so the hero decodes in view instead of behind the overlay.
+        if (document.documentElement.dataset.intro) {
+          document.addEventListener('intro:done', start, { once: true });
+        } else {
+          start();
+        }
       });
     </script>
+
+    <script>
+      // First-visit intro: scramble-decode the identity lines while a counter
+      // tracks real load progress (fonts + assets), then wipe the plate up.
+      const INTRO_GLYPHS = '!<>-_\\/[]{}=+*^?#0123456789ABCDEF';
+
+      document.addEventListener('astro:page-load', () => {
+        const root = document.documentElement;
+        const intro = document.getElementById('intro');
+        if (!intro || !root.dataset.intro || intro.dataset.run) return;
+        intro.dataset.run = '1';
+
+        intro.querySelectorAll<HTMLElement>('[data-intro-line]').forEach((line, i) => {
+          const original = line.textContent?.trim() ?? '';
+          line.textContent = '';
+          line.style.opacity = '1';
+          const start = performance.now() + i * 170;
+          const DURATION = 700;
+          const step = (now: number) => {
+            const p = Math.min(1, Math.max(0, (now - start) / DURATION));
+            const settled = Math.floor(original.length * p);
+            line.textContent =
+              original.slice(0, settled) +
+              [...original.slice(settled, settled + 10)]
+                .map((ch) => (ch === ' ' ? ' ' : INTRO_GLYPHS[(Math.random() * INTRO_GLYPHS.length) | 0]))
+                .join('');
+            if (p < 1) requestAnimationFrame(step);
+            else line.textContent = original;
+          };
+          requestAnimationFrame(step);
+        });
+
+        let ready = false;
+        Promise.all([
+          'fonts' in document ? document.fonts.ready : Promise.resolve(),
+          new Promise<void>((resolve) =>
+            document.readyState === 'complete'
+              ? resolve()
+              : addEventListener('load', () => resolve(), { once: true })
+          ),
+        ]).then(() => (ready = true));
+        setTimeout(() => (ready = true), 2500); // never hold the page hostage
+
+        const count = document.getElementById('intro-count');
+        const finish = () => {
+          try {
+            sessionStorage.setItem('intro-seen', '1');
+          } catch (_) {
+            /* fine, they get the intro again next time */
+          }
+          root.classList.add('intro-leave');
+          document.dispatchEvent(new Event('intro:done'));
+          setTimeout(() => {
+            delete root.dataset.intro;
+            root.classList.remove('intro-leave');
+          }, 850);
+        };
+
+        // The counter eases toward 92 until the page is actually ready, then
+        // runs out to 100: real progress, not a fake timer. A minimum runtime
+        // keeps cached loads from reducing the intro to a flicker.
+        const MIN_MS = 1400;
+        const t0 = performance.now();
+        let p = 0;
+        let last = t0;
+        const tick = (now: number) => {
+          const dt = Math.min(0.05, (now - last) / 1000);
+          last = now;
+          const cap = ready && now - t0 >= MIN_MS ? 1.02 : 0.92;
+          p = Math.min(cap, p + (cap - p) * dt * 2.2 + 0.36 * dt);
+          if (count)
+            count.textContent = String(Math.min(100, Math.floor(p * 100))).padStart(3, '0');
+          if (p >= 1) return finish();
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+    </script>
+
+    <style is:global>
+      #intro {
+        display: none;
+      }
+      html[data-intro='1'] {
+        overflow: hidden;
+      }
+      html[data-intro='1'] #intro {
+        position: fixed;
+        inset: 0;
+        z-index: 90;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: clamp(1.25rem, 4vw, 2.5rem);
+        padding-top: clamp(5rem, 14vh, 8rem);
+        background: var(--color-bg);
+        clip-path: inset(0 0 0 0);
+      }
+      html.intro-leave #intro {
+        clip-path: inset(0 0 100% 0);
+        transition: clip-path 0.75s cubic-bezier(0.83, 0, 0.17, 1);
+      }
+    </style>
   </body>
 </html>

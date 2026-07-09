@@ -4,7 +4,12 @@ import ContactForm from '@/components/ContactForm.astro';
 const year = new Date().getFullYear();
 ---
 
-<footer id="contact" class="border-line relative isolate overflow-hidden border-t">
+<footer
+  id="contact"
+  class="border-line relative isolate overflow-hidden border-t"
+  data-hud="05 · Contact"
+  data-cursor="Grab"
+>
   <canvas
     id="sim-pendulum"
     class="pointer-events-none absolute inset-0 -z-10 size-full"

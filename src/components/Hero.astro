@@ -1,8 +1,22 @@
 ---
 import { SITE } from '@/lib/site';
+
+// Spec-sheet strip: the engineering-datasheet read of the whole site in four
+// mono columns. Static HTML, zero JS.
+const SPECS = [
+  { label: 'Stack', value: 'PyTorch · Dagster · Rust · Postgres' },
+  { label: 'Scale', value: '80K listings/day · 600+ cities' },
+  { label: 'In the open', value: '62 models · 68 datasets' },
+  { label: 'Now', value: 'CTO @ RoomIQ · Building SteelEye' },
+] as const;
 ---
 
-<section id="hero" class="relative isolate flex min-h-svh flex-col justify-end overflow-hidden">
+<section
+  id="hero"
+  class="relative isolate flex min-h-svh flex-col justify-end overflow-hidden"
+  data-cursor="Stir"
+  data-hud="Scroll"
+>
   <canvas id="field" class="pointer-events-none absolute inset-0 -z-10 size-full" aria-hidden="true"></canvas>
   <div
     class="pointer-events-none absolute inset-0"
@@ -58,6 +72,23 @@ import { SITE } from '@/lib/site';
           </svg>
         </a>
       </div>
+    </div>
+
+    <div
+      class="border-line mt-12 grid grid-cols-2 gap-x-8 gap-y-5 border-t pt-5 md:grid-cols-4"
+      data-reveal
+      style="--reveal-delay: 0.35s"
+    >
+      {
+        SPECS.map((spec) => (
+          <div>
+            <span class="data-label text-faint mb-1.5 block">{spec.label}</span>
+            <span class="data-label" data-scramble>
+              {spec.value}
+            </span>
+          </div>
+        ))
+      }
     </div>
   </div>
 </section>

@@ -5,10 +5,12 @@
 
 <div id="cursor-dot" aria-hidden="true"></div>
 <div id="cursor-ring" aria-hidden="true"></div>
+<div id="cursor-label" aria-hidden="true" class="data-label"></div>
 
 <style is:global>
   #cursor-dot,
-  #cursor-ring {
+  #cursor-ring,
+  #cursor-label {
     display: none;
   }
 
@@ -60,6 +62,28 @@
     html.cursor-hot #cursor-dot {
       opacity: 0;
     }
+
+    /* Context whisper next to the cursor: teaches that a section's physics
+       background is interactive (STIR, WARP, FLING, GRAB). */
+    #cursor-label {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      pointer-events: none;
+      opacity: 0;
+      padding: 0.3rem 0.65rem;
+      border: 1px solid var(--color-line-strong);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+      backdrop-filter: blur(4px);
+      color: var(--color-accent);
+      transition: opacity 0.2s ease;
+    }
+    #cursor-label.on {
+      opacity: 1;
+    }
   }
 
   .magnetic {
@@ -90,6 +114,8 @@
       const half = ring.offsetWidth / 2;
       ring.style.transform = `translate(${ringX - half}px, ${ringY - half}px)`;
     }
+    const label = document.getElementById('cursor-label');
+    if (label) label.style.transform = `translate(${targetX + 18}px, ${targetY + 16}px)`;
     raf = requestAnimationFrame(loop);
   }
 
@@ -116,8 +142,19 @@
     );
     document.addEventListener('pointerleave', () => show(false));
     document.addEventListener('pointerover', (e) => {
-      const hot = (e.target as HTMLElement).closest('a, button, [role="button"], summary');
+      const target = e.target as HTMLElement;
+      const hot = target.closest('a, button, [role="button"], summary');
       document.documentElement.classList.toggle('cursor-hot', !!hot);
+
+      // Section physics affordance: whisper the verb unless the pointer is on
+      // something with its own interaction (links, form fields, work rows).
+      const label = document.getElementById('cursor-label');
+      if (!label) return;
+      const zone = target.closest<HTMLElement>('[data-cursor]');
+      const busy = hot || target.closest('input, textarea, select, label, .work-row');
+      const text = !busy && zone ? (zone.dataset.cursor ?? '') : '';
+      if (text) label.textContent = text;
+      label.classList.toggle('on', !!text);
     });
   }
 

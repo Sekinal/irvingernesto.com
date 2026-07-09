@@ -1,0 +1,75 @@
+---
+// Fixed wayfinding HUD, bottom left: a thin accent scroll-progress bar plus the
+// active numbered section, read from [data-hud] attributes on the sections.
+// Fine-pointer desktop only; fades out at the very end of the page so it never
+// collides with the footer meta line.
+---
+
+<div
+  id="hud"
+  aria-hidden="true"
+  class="pointer-events-none fixed bottom-6 left-5 z-40 hidden items-center gap-3 transition-opacity duration-500 md:left-10 lg:flex"
+>
+  <span id="hud-sec" class="data-label text-faint min-w-24">Scroll</span>
+  <span class="bg-line relative block h-px w-16 overflow-hidden">
+    <span
+      id="hud-bar"
+      class="bg-accent absolute inset-0 origin-left"
+      style="transform: scaleX(0)"></span>
+  </span>
+</div>
+
+<script>
+  let ctrl: AbortController | null = null;
+  let io: IntersectionObserver | undefined;
+
+  document.addEventListener('astro:page-load', () => {
+    ctrl?.abort();
+    io?.disconnect();
+    const hud = document.getElementById('hud');
+    const bar = document.getElementById('hud-bar');
+    const sec = document.getElementById('hud-sec');
+    if (!hud || !bar || !sec) return;
+    ctrl = new AbortController();
+    const { signal } = ctrl;
+
+    let pending = false;
+    const paint = () => {
+      pending = false;
+      const max = document.documentElement.scrollHeight - innerHeight;
+      const p = max > 0 ? Math.min(1, scrollY / max) : 0;
+      bar.style.transform = `scaleX(${p})`;
+      hud.style.opacity = p > 0.97 ? '0' : '1';
+    };
+    addEventListener(
+      'scroll',
+      () => {
+        if (!pending) {
+          pending = true;
+          requestAnimationFrame(paint);
+        }
+      },
+      { passive: true, signal }
+    );
+    addEventListener('resize', paint, { passive: true, signal });
+    paint();
+
+    // Active section: whichever [data-hud] block crosses the middle band of
+    // the viewport owns the label.
+    sec.textContent = 'Scroll';
+    const tagged = document.querySelectorAll<HTMLElement>('[data-hud]');
+    if (tagged.length) {
+      io = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              sec.textContent = (entry.target as HTMLElement).dataset.hud ?? 'Scroll';
+            }
+          }
+        },
+        { rootMargin: '-45% 0px -50% 0px' }
+      );
+      tagged.forEach((el) => io!.observe(el));
+    }
+  });
+</script>

@@ -19,7 +19,9 @@ const DYE_RES = COARSE ? 288 : 448;
 const PRESSURE_ITERS_FULL = COARSE ? 10 : 18;
 const VORTICITY = COARSE ? 0 : 12;
 const VEL_DISSIPATION = 0.4;
-const DYE_DISSIPATION = 1.2;
+// Low dye dissipation keeps a standing haze in the hero: the smoke is a
+// presence, not an occasional event.
+const DYE_DISSIPATION = 0.65;
 const SPLAT_RADIUS = 0.0022;
 
 interface FBO {
@@ -537,7 +539,7 @@ export function createFluid(
   // sources drifting along slow Lissajous paths, injecting ink along the path
   // tangent with a little buoyancy so it rises like incense.
   const EMITTERS = COARSE ? 1 : 2;
-  const EMIT_INTERVAL = 0.13;
+  const EMIT_INTERVAL = 0.11;
   let nextEmit = 0;
   const emitInk: [number, number, number][] = [];
   const emitInkUntil: number[] = [];
@@ -557,10 +559,14 @@ export function createFluid(
     // a continuous ribbon rather than confetti.
     if ((emitInkUntil[e] ?? 0) <= t) {
       emitInkUntil[e] = t + 5;
-      emitInk[e] = pickInk();
+      // Emitters stay in the orange range: the cream ink is reserved for
+      // pointer strokes, so the standing ambient plume never builds into a
+      // white mass that washes out the type.
+      const stops = palette().theme === 'light' ? LIGHT_STOPS : DARK_STOPS;
+      emitInk[e] = stops[Math.random() < 0.7 ? 0 : 1]!;
     }
-    const [r, g, b, a] = inkVec(emitInk[e]!, 0.32);
-    enqueueSplat(x, y, tx * 230, ty * 230 + 90, r, g, b, a, SPLAT_RADIUS * 1.8);
+    const [r, g, b, a] = inkVec(emitInk[e]!, 0.42);
+    enqueueSplat(x, y, tx * 260, ty * 260 + 110, r, g, b, a, SPLAT_RADIUS * 1.8);
   }
 
   // Pointer events coalesce into one splat per frame: a 1000 Hz mouse would
@@ -596,15 +602,23 @@ export function createFluid(
   }
 
   function seedAmbient() {
-    // Four gentle splats fanning along a diagonal so the hero is alive before
-    // any input.
-    for (let i = 0; i < 4; i++) {
-      const p = i / 3;
-      const x = 0.22 + p * 0.56;
-      const y = 0.3 + p * 0.4;
-      const ang = -0.6 + p * 1.2;
-      queueAmbient(x, y, Math.cos(ang) * 550, Math.sin(ang) * 550, 0.85);
+    // A loose 3 by 3 field of large soft splats with swirling directions, so
+    // the hero opens already filled with smoke instead of building up from
+    // nothing. Jitter keeps it organic; the projection step ties it together
+    // into one drifting body within a second.
+    for (let gy = 0; gy < 3; gy++) {
+      for (let gx = 0; gx < 3; gx++) {
+        const x = 0.2 + gx * 0.3 + (Math.random() - 0.5) * 0.14;
+        const y = 0.24 + gy * 0.26 + (Math.random() - 0.5) * 0.12;
+        // Roughly tangential directions around the canvas center: the field
+        // starts with one large slow swirl instead of colliding jets.
+        const ang = Math.atan2(y - 0.5, x - 0.5) + Math.PI / 2 + (Math.random() - 0.5) * 0.8;
+        const force = 260 + Math.random() * 240;
+        queueAmbient(x, y, Math.cos(ang) * force, Math.sin(ang) * force, 0.75);
+      }
     }
+    // One brighter kernel near the type for the first impression.
+    queueAmbient(0.62, 0.5, -320, 260, 1.0);
   }
 
   // Adaptive quality.
