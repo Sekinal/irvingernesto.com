@@ -1,6 +1,6 @@
 ---
 title: 'Teaching XGBoost to Read Blueprints'
-description: 'Lessons from building a vector-native structural member detector for steel construction drawings, where gradient-boosted trees beat transformers, and label quality beat everything.'
+description: 'Lessons from building a vector-native structural member detector for steel construction drawings, where gradient-boosted trees beat transformers, label quality beat everything, and the headline number turned out to be measuring the wrong thing.'
 pubDate: 2026-06-28
 tags: ['ML', 'XGBoost', 'CAD', 'SteelEye', 'Research']
 ---
@@ -19,14 +19,14 @@ Ground truth came from an unusual place: **NC1 (DSTV) files**, the CNC instructi
 
 ## The model zoo, and who survived it
 
-We benchmarked honestly: gradient-boosted trees (LightGBM/XGBoost), a deep residual MLP, a set-attention transformer, a kNN message-passing GNN, tabular foundation models (TabICL, TabPFN), even the Hierarchical Reasoning Model.
+We benchmarked honestly: gradient-boosted trees (LightGBM/XGBoost), a deep residual MLP, a set-attention transformer, a kNN message-passing GNN, tabular foundation models (TabICL, TabPFN), even the Hierarchical Reasoning Model. The numbers below are relative scores from the same self-consistent harness (more on why that harness flattered everyone in a moment), so read them as a ranking, not as capability.
 
-| Model | End-to-end F1 (gold) |
+| Model | Relative F1 (same harness) |
 | --- | --- |
-| **GBM (XGBoost/LightGBM)** | **0.948** |
-| MLP (residual, bf16) | 0.928 |
-| GBM + MLP ensemble | 0.926 |
-| GNN (kNN graph, 3 layers) | 0.882 |
+| **GBM (XGBoost/LightGBM)** | **best** |
+| MLP (residual, bf16) | close behind |
+| GBM + MLP ensemble | close behind |
+| GNN (kNN graph, 3 layers) | worse |
 | Transformer (set attention) | diverged |
 
 The gradient-boosted trees won, on 84 engineered features: geometry (distance to segments, orientation context), relational cues (neighbor density, same-row/column), and 32 PCA dimensions of **e5-small text embeddings**. That last part matters: a 33M-parameter embedding model beat its larger siblings at understanding technical codes, and added +6.6 points on unseen naming schemes.
@@ -54,6 +54,6 @@ If your model has plateaued, audit your labels before reaching for a bigger netw
 
 ## Where it landed
 
-The production detector hits **0.987 member-detection F1** and **0.948 end-to-end** (found *and* correctly named) on a frozen gold test set validated against fabrication CNC files, with leave-one-project-out cross-validation and reproducible-from-scratch docs.
+For a while I thought the production detector hit 0.987 member-F1 and 0.948 end-to-end, and I reported those numbers. They turned out to be measuring the wrong thing: scored against a benchmark auto-derived from the model's own inputs, the model was largely grading its own homework. I tell that whole eval-integrity story in [The 0.98 F1 That Wasn't](/blog/the-f1-that-wasnt). Regraded against independent human gold, the honest detector reaches **~0.77 member-F1** and **~0.78 end-to-end** (found *and* correctly named) on a frozen human-annotated test set, with leave-one-project-out cross-validation and reproducible-from-scratch docs. That is the number I stand behind, and I think it reads as the stronger result.
 
 The boring stack won: engineered features, gradient-boosted trees, procedural data, obsessive label hygiene. The exciting part isn't the architecture. It's that estimators get hours of their week back.

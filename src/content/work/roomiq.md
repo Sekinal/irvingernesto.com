@@ -64,4 +64,4 @@ RoomIQ's differentiator is discipline, not dazzle: consistent filter scope acros
 
 ## Outcome
 
-RoomIQ is live at [roomiq.io](https://roomiq.io) with free and Pro tiers, tracking 6,600+ active properties. What began as "can you scrape some listings?" became the analytics layer an entire niche of real-estate investing was missing.
+RoomIQ is live at [roomiq.io](https://roomiq.io) with free and Pro tiers, tracking 6,600+ active properties. What began as "can you scrape some listings?" is now the analytics layer an entire niche of real-estate investing was missing.
