@@ -3,6 +3,7 @@ title: 'Rosettia: Translation for Languages the Internet Forgot'
 description: 'Building open translation and speech models for Quechua, Nahuatl, and Akkadian. 62 models and 68 datasets later, what I have learned about low-resource NLP.'
 pubDate: 2026-07-01
 tags: ['NLP', 'Low-resource', 'Quechua', 'HuggingFace', 'Open Source']
+draft: true
 ---
 
 After [NeuralTranslate](/blog/neuraltranslate-preserving-nahuatl-with-ai) showed that a careful fine-tune could reach near-human Nahuatl↔Spanish translation, an obvious question followed: does the recipe generalize? Can one person with rented GPUs build usable translation for *any* underserved language?
