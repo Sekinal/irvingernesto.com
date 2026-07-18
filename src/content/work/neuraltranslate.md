@@ -35,7 +35,7 @@ I fine-tuned Google's **Gemma 3 27B** with 4-bit quantization, which is what let
 
 ## What I got wrong, and fixed
 
-The honest lesson of this project is that I underinvested in the data. The first version trained on an existing public Nahuatl-Spanish corpus (the SomosNLP Axolotl dataset) that I used largely as it came, without the cleanup it needed. It was not until Nahuatl speakers reviewed the output and pointed out real quality problems that I went back and actually addressed the dataset. That feedback, not a benchmark number, is what moved the work forward, and it is the part I would do differently from the start next time.
+The honest lesson of this project is that I underinvested in the data. The first version trained on an existing public Nahuatl-Spanish corpus (the SomosNLP Axolotl dataset) largely as it came. It scored well on validation, but the corpus uses an older orthography that does not fit how Nahuatl is written today, so a high validation score mostly meant the model had faithfully learned an outdated spelling. Nahuatl speakers, not a benchmark, are the ones who caught it: they read the output and told me it was off for modern Nahuatl. That feedback is what moved the work forward, and taking the orthography seriously from the start is what I would do differently next time.
 
 ## Why it matters
 

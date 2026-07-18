@@ -1,9 +1,8 @@
 ---
 title: 'NeuralTranslate: Preserving Nahuatl with AI'
-description: 'How I fine-tuned Gemma 3 27B to 97+ ChrF for Nahuatl-Spanish translation, with a full fine-tune on 4-bit quantized weights, on a single GPU.'
+description: 'I fine-tuned Gemma 3 27B for Nahuatl to Spanish and hit 97.48 ChrF on validation. The number was real, and still misleading, and Nahuatl speakers are the ones who showed me why.'
 pubDate: 2025-06-20
 tags: ['AI', 'NLP', 'Fine-tuning', 'Nahuatl', 'LLM']
-draft: true
 ---
 
 import Callout from '@/components/mdx/Callout.astro';
@@ -70,7 +69,7 @@ This approach:
 | Hardware      | NVIDIA B200 (180GB VRAM) |
 | Training time | ~8 hours                 |
 
-I used a curated parallel corpus of Nahuatl-Spanish sentence pairs, focusing on modern Central Nahuatl for consistency.
+I trained on the SomosNLP Axolotl Nahuatl-Spanish parallel corpus, an existing open dataset. That choice turned out to matter more than any hyperparameter, for a reason I get to below.
 
 ## Results
 
@@ -78,11 +77,12 @@ The training curves tell the story better than any table:
 
 <TrainingCurves />
 
-By step 4,355 the model reached a **ChrF score of 97.48**, remarkably close to human-level translation quality.
+By step 4,355 the model reached a **ChrF of 97.48 on the validation set**. On paper that looks like a solved problem. It is not, and the distance between that number and the truth is the most important thing this project taught me. I get to it two sections down.
 
-<Callout type="success">
-  For comparison: standard QLoRA approaches on the same data plateaued around 85 to 88 ChrF. The full
-  fine-tune gained nearly 10 points.
+<Callout type="info">
+  For a technical comparison on the same validation data: standard QLoRA plateaued around 85 to 88
+  ChrF, and the full fine-tune gained nearly 10 points. That gap is real. It is a statement about the
+  training method, not about how good a modern Nahuatl translator the result actually is.
 </Callout>
 
 ## Why ChrF?
@@ -103,6 +103,14 @@ I chose ChrF (character n-gram F-score) over BLEU because:
 
 The model correctly handles incorporated pronouns (_ni-_ = I, _mitz-_ = you), verb conjugations and aspects, and interrogative particles.
 
+## The validation score was real, and still misleading
+
+A ChrF of 97 on validation does not mean the model is a good modern Nahuatl translator. It means the model learned to reproduce the validation text very faithfully. Everything then depends on what that text was.
+
+The Axolotl corpus uses an older orthography that does not match how Nahuatl is written by modern translators today. So the model became excellent at matching flawed-orthography references, and ChrF, which only compares character sequences against those references, happily rewarded it. A metric measures agreement with your data. If the data is systematically off, a high score just means you learned the flaw well.
+
+The people who caught this were not a benchmark. Nahuatl speakers read the actual output and told me it was wrong for modern Nahuatl. That feedback is worth more than the 97, and it is what pushed me to go back and take the orthography and the dataset seriously rather than trusting the curve. The lesson I keep: for a language you do not speak, the real evaluation is the community, not the validation set.
+
 ## Try it yourself
 
 <LinkCard
@@ -119,7 +127,7 @@ The model correctly handles incorporated pronouns (_ni-_ = I, _mitz-_ = you), ve
 
 ## What's next
 
-This project demonstrates that with the right approach, we can build high-quality NLP tools for endangered and low-resource languages. Since this post was written, the effort has grown into the **Rosettia** family (covering Quechua and more) plus speech recognition previews and even Akkadian embeddings.
+This project taught me that the model was the easy part and the data and the community were the hard, important parts. Since this post was written, the effort has grown into the **Rosettia** family, including a [Spanish to Quechua system](/blog/rosettia-low-resource-languages) that beat the prior task winners, alongside speech recognition for Mexican Indigenous languages.
 
 ---
 
