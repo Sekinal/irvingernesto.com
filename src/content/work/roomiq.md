@@ -23,10 +23,10 @@ metrics:
     label: Listings ingested every day
   - value: '600+'
     label: US cities covered
+  - value: '6,600+'
+    label: Active properties tracked live
   - value: '8.2%'
-    label: MAPE on room-level rent prediction
-  - value: '44'
-    label: Dagster assets across 21 scheduled jobs
+    label: Error on room-level rent forecasts
 summary: >
   RoomIQ turns the chaotic co-living rental market into investable data: occupancy,
   pricing, and revenue analytics down to the individual room. I built the data
