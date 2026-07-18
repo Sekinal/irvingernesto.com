@@ -11,9 +11,6 @@ stack:
   - FastAPI
   - PostgreSQL
   - XGBoost
-  - CatBoost
-  - TabPFN
-  - Chronos-2
   - Next.js 15
   - Redis
   - Stripe
@@ -48,11 +45,10 @@ The ingestion side uses request-budgeted, fingerprint-cloaked scrapers (raw-firs
 
 ## The ML
 
-Three model families do the heavy lifting:
+The production model is deliberately unglamorous, and that is the point.
 
-- **Room-rent prediction**: an XGBoost regressor over 63 leakage-controlled features (target-encoded categoricals, K-Means geo-clusters, market aggregates computed from the training split only) hitting **8.2% MAPE** on held-out room-level rent.
-- **A multi-expert revenue predictor** for cold-start properties: a coverage router dispatching between gradient-boosted specialists, retrieval-based comparables, Bayesian priors, and **in-context tabular foundation models (TabPFN, TabICL)**, emitting calibrated prediction intervals instead of point guesses.
-- **Chronos-2 market forecasting**: weekly forward-looking forecasts of stock, price, occupancy, and revenue per city, with uncertainty bands and enforced metric identities. A fill-time model estimates 7/14/30-day fill probability and sweeps candidate prices to generate pricing guidance.
+- **Room-rent prediction**: an XGBoost regressor over 63 leakage-controlled features (target-encoded categoricals, K-Means geo-clusters, market aggregates computed from the training split only), hitting **8.2% MAPE** on held-out room-level rent. I prototyped fancier ensembles reaching for foundation models and retrieval, and they were worse, so the boring, accurate, explainable model is the one that ships.
+- **Market forecasting**: weekly forward-looking forecasts of stock, price, occupancy, and revenue per city, with uncertainty bands and enforced metric identities. A fill-time model estimates 7/14/30-day fill probability and sweeps candidate prices to generate pricing guidance.
 
 ## The product surface
 

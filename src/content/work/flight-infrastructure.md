@@ -2,7 +2,7 @@
 title: Flight Data Infra
 tagline: One API, six airlines, six different locked doors. The data platform behind FindMyFlight.ai.
 role: Data Engineer · FindMyFlight.ai
-year: 2025 → Now
+year: 2025
 order: 4
 stack:
   - Python
@@ -25,10 +25,11 @@ metrics:
     label: Cookie-session success rate
 summary: >
   FindMyFlight.ai recruited me after I won their scraper performance contest.
-  I build the data infrastructure behind it: independent per-airline scrapers
-  feeding a unified aggregation API on PostgreSQL, Redis, and Celery, live in
-  production behind a Cloudflare Tunnel. One API, six airlines, six different
-  locked doors.
+  I built the data infrastructure behind it: independent per-airline scrapers
+  feeding a unified aggregation API on PostgreSQL, Redis, and Celery. The
+  scrapers and the API worked; the product was later shelved when the client's
+  funding ran out. What stands is the engineering: one API, six airlines, six
+  different locked doors.
 ---
 
 ## The contest
@@ -37,7 +38,7 @@ FindMyFlight.ai found me through a scraper performance contest. My American Airl
 
 ## One API, six locked doors
 
-The platform serves award-flight availability across six production airlines: United, Qantas, Alaska, Delta, American, and JetBlue. Every one of them is a different building with a different lock, and the mistake most people make is buying one skeleton key (a full stealth browser) and using it on every door. That is slow, and it is louder than it needs to be.
+The platform pulled award-flight availability across six airlines: United, Qantas, Alaska, Delta, American, and JetBlue. Every one of them is a different building with a different lock, and the mistake most people make is buying one skeleton key (a full stealth browser) and using it on every door. That is slow, and it is louder than it needs to be.
 
 I meet each target with the minimum-necessary technique for its defense posture, and I respect what each site is defending. The result is a deliberate spectrum:
 
@@ -72,6 +73,10 @@ Past the six core airlines there are more targets, points and award aggregators 
 
 Deploy discipline holds the whole thing together. Server checkouts are immutable and read-only, reset via git rather than edited in place. A deploy script runs health, readiness, and search verification across both servers before anything goes live, and scheduled scrapes run only on staging.
 
+## How it ended
+
+The product did not survive. The client ran out of money and FindMyFlight was shelved before it became a business. The engineering is what I keep from it: the scrapers worked, the API worked, and the contest-winning idea held up under load. Not every good build ships, and this one is worth showing anyway.
+
 ## The craft
 
-This work is equal parts systems engineering and forensics. A target is a black box emitting signals, and the job is to build the model that explains them, then choose the lightest tool that fits. It rewards restraint: the elegant answer is almost never the biggest hammer, it's the smallest one that still opens the door.
+This work is equal parts systems engineering and forensics. A target is a black box emitting signals, and the job is to build the model that explains them, then choose the lightest tool that fits. It rewards restraint: the elegant answer is almost never the biggest hammer, it is the smallest one that still opens the door.
