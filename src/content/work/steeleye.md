@@ -45,7 +45,7 @@ The insight that makes it work is that a CAD-generated PDF is already text. It c
 
 ## Accuracy that reconciles to the shop
 
-The number that matters to a fabricator is not a machine-learning score, it is tonnage, because tonnage is what they bill and buy steel against. So that is what I hold the system to. Ground truth comes from the DSTV NC1 files the shop's CNC machines actually cut from, and across four complete real projects the total tonnage the pipeline recovers lands within about 1% of those files, from 96.9% to 100%, averaging 98.7%. The takeoff a person spends hours on becomes minutes of review, against a number that ties out to the shop floor.
+The number that matters to a fabricator is not a machine-learning score, it is tonnage, because tonnage is what they bill and buy steel against. So that is what I hold the system to. Ground truth comes from the DSTV NC1 files the shop's CNC machines actually cut from, and across four complete real projects the total tonnage the pipeline recovers lands within about 1% of those files, from 96.9% to 100%, averaging 98.7%. The takeoff a person spends hours on becomes minutes of review, against a number that ties out to the shop floor. This is the newest part of SteelEye and still in active development: the figures here are from the research build as I harden the takeoff automation into the product.
 
 ## Outcome
 

@@ -1,6 +1,6 @@
 ---
 title: 'GSPO: Reinforcement Learning for Low-Resource Speech Recognition'
-description: 'Teaching Whisper to hear Mexican Indigenous languages with RL. Hand-rolling GSPO around an audio policy, rewarding on negative Character Error Rate, and taking #1 on the MEXA leaderboard.'
+description: 'Teaching Whisper to hear Mexican Indigenous languages with RL. Hand-rolling GSPO around an audio policy, rewarding on negative Character Error Rate, and making real progress on languages every off-the-shelf system fails.'
 pubDate: 2026-07-09
 tags: ['ASR', 'Reinforcement Learning', 'Whisper', 'Low-resource', 'Nahuatl']
 ---
@@ -72,7 +72,7 @@ On the 240-clip MEXA subset, evaluated fairly through faster-whisper:
 | SFT preview | 68.5 | 30.6 |
 | SFT + GSPO | 66.0 | 28.3 |
 
-A net improvement of 2.45 WER from RL alone, which was enough to take the #1 spot on the leaderboard. For context, the model leads the next-best system on CER by a wide margin: 30.6 against 74.3.
+A net improvement of 2.45 WER from RL alone. The comparison that actually matters is not my own benchmark, it is the gap to what already exists: off-the-shelf systems (Whisper, Parakeet, Canary, MMS, Granite) sit near or above 99% WER on these languages, effectively unusable, and where the next-best measured system lands at 74.3 CER, this one reaches 30.6. The point is not a scoreboard rank on a benchmark I built, it is that the languages were near-untranscribable and now they are not.
 
 The clearest evidence that the CER reward did what it was designed to do: the worst looping language dropped from 100.2 WER to 75.9. That is the hallucination penalty working exactly as predicted, on the language that needed it most.
 
