@@ -2,7 +2,7 @@
 title: Flight Data Infra
 tagline: One API, six airlines, six different locked doors. The data platform behind FindMyFlight.ai.
 role: Data Engineer · FindMyFlight.ai
-year: 2025
+year: '2025'
 order: 4
 stack:
   - Python
